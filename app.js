@@ -1166,8 +1166,11 @@ document.addEventListener('DOMContentLoaded', () => {
     reader.readAsArrayBuffer(file);
   });
 
-  // Initial render
+  // Initial render - Load vehicles data first!
+  initData();
   updateKPIs();
   populateDropdownFilters();
   renderDatabaseTable();
+  if (typeof renderBadgesList === 'function') renderBadgesList();
+  if (typeof populateBadgeSelect === 'function') populateBadgeSelect();
 });
