@@ -1,0 +1,7 @@
+# .gitignore for Sistema de Control Vehicular
+.env
+.env.local
+node_modules/
+dist/
+.DS_Store
+*.log

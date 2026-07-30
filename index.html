@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Control y Carnetización Vehicular | Centro de Distribución</title>
+  
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- QRCode.js for high quality QR generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  
+  <!-- HTML5 QR Code Scanner -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  
+  <!-- SheetJS XLSX Parser & Exporter -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
+  <!-- Supabase JS Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
+
+  <!-- TOP HEADER -->
+  <header class="no-print border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-40 shadow-xl">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center shadow-lg shadow-amber-500/20 text-slate-950 font-bold text-xl">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div>
+          <h1 class="font-outfit font-extrabold text-lg sm:text-xl tracking-tight text-white flex items-center gap-2">
+            CONTROL VEHICULAR <span class="bg-amber-500/20 text-amber-400 text-xs px-2 py-0.5 rounded-full font-semibold border border-amber-500/30">CEDI</span>
+          </h1>
+          <p class="text-xs text-slate-400 font-medium">Sistema de Carnetización y Verificación de Documentos</p>
+        </div>
+      </div>
+
+      <!-- Quick Search Bar -->
+      <div class="flex-1 max-w-md mx-auto w-full sm:w-auto">
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input type="text" id="globalSearchInput" placeholder="Consultar Placa (ej. JRK763) o Cédula..." 
+                 class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl pl-10 pr-10 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all uppercase tracking-wide">
+          <button id="clearGlobalSearch" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Live KPI Badges -->
+      <div class="hidden lg:flex items-center gap-3 text-xs font-semibold">
+        <div class="bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-2">
+          <span class="text-slate-400">Total:</span>
+          <span id="kpiTotal" class="text-white font-bold text-sm">0</span>
+        </div>
+        <div class="bg-emerald-950/50 border border-emerald-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2 text-emerald-400">
+          <i class="fa-solid fa-circle-check"></i>
+          <span>Vigentes:</span>
+          <span id="kpiVigentes" class="font-bold text-sm">0</span>
+        </div>
+        <div class="bg-amber-950/50 border border-amber-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2 text-amber-400">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>Por Vencer:</span>
+          <span id="kpiPorVencer" class="font-bold text-sm">0</span>
+        </div>
+        <div class="bg-rose-950/50 border border-rose-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2 text-rose-400">
+          <i class="fa-solid fa-circle-xmark"></i>
+          <span>Vencidos:</span>
+          <span id="kpiVencidos" class="font-bold text-sm">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN NAVIGATION TABS -->
+    <div class="border-t border-slate-800/60 bg-slate-900/60">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="flex gap-2 sm:gap-6 overflow-x-auto py-1 scrollbar-none" aria-label="Navegación principal">
+          <button id="tab-vigilancia" class="nav-tab active-tab text-sm font-semibold py-3 px-4 rounded-lg flex items-center gap-2 border-b-2 transition-all whitespace-nowrap">
+            <i class="fa-solid fa-camera font-lg"></i>
+            <span>Control de Vigilancia (QR)</span>
+          </button>
+          <button id="tab-carnets" class="nav-tab text-sm font-semibold py-3 px-4 rounded-lg flex items-center gap-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all whitespace-nowrap">
+            <i class="fa-solid fa-id-card font-lg"></i>
+            <span>Estudio de Carnetización</span>
+          </button>
+          <button id="tab-database" class="nav-tab text-sm font-semibold py-3 px-4 rounded-lg flex items-center gap-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all whitespace-nowrap">
+            <i class="fa-solid fa-database font-lg"></i>
+            <span>Base de Datos y Renovaciones</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT AREA -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ================================================================= -->
+    <!-- MODULO 1: VIGILANCIA / ESCÁNER DE SEGURIDAD                       -->
+    <!-- ================================================================= -->
+    <section id="view-vigilancia" class="space-y-6">
+      
+      <!-- Verification Header Banner -->
+      <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-6 rounded-2xl border border-slate-800 shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl text-amber-500 pointer-events-none">
+          <i class="fa-solid fa-qrcode"></i>
+        </div>
+        <div class="max-w-3xl relative z-10">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-3">
+            <i class="fa-solid fa-shield-cat"></i> Módulo Operativo de Portería
+          </span>
+          <h2 class="font-outfit text-2xl sm:text-3xl font-extrabold text-white">Verificación Rápida de Ingreso Vehicular</h2>
+          <p class="text-slate-400 text-sm mt-1">Escanee el código QR del carnet físico del conductor o digite la placa para consultar el estado del SOAT, RTM y Licencia en tiempo real.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Panel: Scanner & Search Input -->
+        <div class="lg:col-span-5 space-y-6">
+          
+          <!-- Camera Scanner Card -->
+          <div class="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-xl">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-outfit font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-camera text-amber-400"></i> Escáner QR por Cámara
+              </h3>
+              <button id="toggleCameraBtn" class="text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 shadow-md shadow-amber-500/20">
+                <i class="fa-solid fa-power-off"></i> <span id="cameraBtnText">Encender Cámara</span>
+              </button>
+            </div>
+            
+            <div id="qrScannerContainer" class="relative bg-slate-950 rounded-xl overflow-hidden min-h-[260px] border border-slate-800 flex items-center justify-center">
+              <div id="qrReader" class="w-full"></div>
+              <div id="qrPlaceholder" class="text-center p-6 text-slate-500">
+                <div class="w-16 h-16 rounded-full bg-slate-900 mx-auto flex items-center justify-center text-slate-600 mb-3 border border-slate-800">
+                  <i class="fa-solid fa-qrcode text-3xl"></i>
+                </div>
+                <p class="text-sm font-medium">Cámara apagada</p>
+                <p class="text-xs text-slate-600 mt-1">Haga clic en "Encender Cámara" para apuntar al QR del carnet</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Manual Lookup Card -->
+          <div class="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-xl">
+            <h3 class="font-outfit font-bold text-white mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-keyboard text-sky-400"></i> Búsqueda Manual Directa
+            </h3>
+            <div class="flex gap-2">
+              <input type="text" id="manualPlacaInput" placeholder="Placa (ej: JRK763)..." 
+                     class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-mono uppercase tracking-wider placeholder-slate-600 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20">
+              <button id="manualSearchBtn" class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm shadow-lg shadow-sky-600/20">
+                <i class="fa-solid fa-magnifying-glass"></i> Buscar
+              </button>
+            </div>
+            
+            <!-- Quick Recent Vehicles -->
+            <div class="mt-4 pt-4 border-t border-slate-800">
+              <p class="text-xs font-semibold text-slate-400 mb-2">Placas para prueba rápida:</p>
+              <div class="flex flex-wrap gap-2" id="quickSamplePlacas">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel: Dynamic Status & Vehicle Details -->
+        <div class="lg:col-span-7">
+          <div id="statusResultCard" class="bg-slate-900 rounded-2xl border border-slate-800 p-6 shadow-xl h-full flex flex-col justify-center text-center">
+            <!-- Initial Empty State -->
+            <div id="statusEmptyState" class="py-12 px-4">
+              <div class="w-20 h-20 rounded-full bg-slate-800/80 mx-auto flex items-center justify-center text-slate-500 text-3xl mb-4 border border-slate-700/60">
+                <i class="fa-solid fa-id-badge"></i>
+              </div>
+              <h3 class="font-outfit font-bold text-xl text-white">Esperando Lectura de Carnet</h3>
+              <p class="text-slate-400 text-sm max-w-sm mx-auto mt-2">Escanee el código QR o ingrese una placa en el panel de la izquierda para verificar la autorización de ingreso.</p>
+            </div>
+
+            <!-- Vehicle Verification Result Container (Hidden initially) -->
+            <div id="statusResultContent" class="hidden space-y-6 text-left">
+              
+              <!-- TRAFFIC LIGHT DECISION BANNER -->
+              <div id="decisionBanner" class="p-5 rounded-2xl border flex items-center gap-4 shadow-xl transition-all">
+                <div id="decisionIconBg" class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0">
+                  <i id="decisionIcon" class="fa-solid"></i>
+                </div>
+                <div>
+                  <span id="decisionBadge" class="text-xs font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full"></span>
+                  <h3 id="decisionTitle" class="font-outfit font-extrabold text-2xl text-white mt-1"></h3>
+                  <p id="decisionSubtitle" class="text-xs font-medium mt-0.5"></p>
+                </div>
+              </div>
+
+              <!-- VEHICLE & OWNER INFO CARD -->
+              <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Placa del Vehículo</p>
+                  <p id="resPlaca" class="font-outfit font-extrabold text-2xl text-amber-400 tracking-wider font-mono mt-0.5"></p>
+                  
+                  <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-3">Tipo de Vehículo</p>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <span id="resVehicleIcon" class="text-amber-400 text-lg"></span>
+                    <span id="resTipoVehiculo" class="font-bold text-white text-sm"></span>
+                  </div>
+                </div>
+
+                <div>
+                  <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Nombre del Conductor / Colaborador</p>
+                  <p id="resNombre" class="font-bold text-slate-100 text-base mt-0.5"></p>
+
+                  <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-3">Número de Cédula</p>
+                  <p id="resCedula" class="font-mono text-slate-300 font-semibold text-sm mt-0.5"></p>
+
+                  <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-3">Empresa / Centro de Distribución</p>
+                  <p id="resEmpresa" class="text-slate-300 text-xs font-medium mt-0.5"></p>
+                </div>
+              </div>
+
+              <!-- DOCUMENT STATUS BREAKDOWN GRID -->
+              <div>
+                <h4 class="font-outfit font-bold text-sm text-slate-300 mb-3 flex items-center gap-2">
+                  <i class="fa-solid fa-file-shield text-amber-400"></i> Estado Detallado de Documentación
+                </h4>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  
+                  <!-- SOAT Card -->
+                  <div id="docCardSoat" class="bg-slate-950/80 border p-4 rounded-xl space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-shield-heart text-amber-400"></i> SOAT
+                      </span>
+                      <span id="tagSoat" class="text-[10px] font-extrabold px-2 py-0.5 rounded-full"></span>
+                    </div>
+                    <div>
+                      <p class="text-[11px] text-slate-500">Vencimiento:</p>
+                      <p id="dateSoat" class="font-mono text-xs font-bold text-white"></p>
+                    </div>
+                    <p id="daysSoat" class="text-[11px] font-semibold"></p>
+                  </div>
+
+                  <!-- RTM Card -->
+                  <div id="docCardRtm" class="bg-slate-950/80 border p-4 rounded-xl space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-wrench text-amber-400"></i> RTM / Tecno
+                      </span>
+                      <span id="tagRtm" class="text-[10px] font-extrabold px-2 py-0.5 rounded-full"></span>
+                    </div>
+                    <div>
+                      <p class="text-[11px] text-slate-500">Vencimiento:</p>
+                      <p id="dateRtm" class="font-mono text-xs font-bold text-white"></p>
+                    </div>
+                    <p id="daysRtm" class="text-[11px] font-semibold"></p>
+                  </div>
+
+                  <!-- Licencia Card -->
+                  <div id="docCardLic" class="bg-slate-950/80 border p-4 rounded-xl space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-id-card text-amber-400"></i> Licencia
+                      </span>
+                      <span id="tagLic" class="text-[10px] font-extrabold px-2 py-0.5 rounded-full"></span>
+                    </div>
+                    <div>
+                      <p class="text-[11px] text-slate-500">Cat: <span id="catLic" class="text-white font-bold"></span> | Vence:</p>
+                      <p id="dateLic" class="font-mono text-xs font-bold text-white"></p>
+                    </div>
+                    <p id="daysLic" class="text-[11px] font-semibold"></p>
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- Action buttons for Vigilancia -->
+              <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+                <button id="printBadgeFromVigilancia" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-4 py-2 rounded-xl transition-all flex items-center gap-2 border border-slate-700">
+                  <i class="fa-solid fa-print"></i> Imprimir Carnet de este Vehículo
+                </button>
+                <button id="resetVigilanciaBtn" class="text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl transition-all flex items-center gap-2">
+                  <i class="fa-solid fa-arrow-rotate-left"></i> Nueva Consulta
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- MODULO 2: ESTUDIO DE CARNETIZACIÓN                                 -->
+    <!-- ================================================================= -->
+    <section id="view-carnets" class="hidden space-y-6">
+      
+      <!-- Studio Header -->
+      <div class="no-print bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-2">
+            <i class="fa-solid fa-print"></i> Estudio de Impresión de Carnets
+          </span>
+          <h2 class="font-outfit text-2xl font-extrabold text-white">Generador de Credenciales con QR Único</h2>
+          <p class="text-slate-400 text-sm mt-0.5">Seleccione un vehículo para previsualizar o imprima en lote todos los carnets en alta resolución (Formato CR80 PVC o Credencial).</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button id="printBatchBtn" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm shadow-lg shadow-amber-500/20">
+            <i class="fa-solid fa-print"></i> Imprimir Carnets Filtrados (<span id="countSelectedToPrint">0</span>)
+          </button>
+        </div>
+      </div>
+
+      <!-- Studio Controls & Preview Grid -->
+      <div class="no-print grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left: Vehicle Selector & Filter -->
+        <div class="lg:col-span-4 bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-xl space-y-4">
+          <h3 class="font-outfit font-bold text-white text-base">Selección de Vehículo</h3>
+          
+          <div>
+            <label for="badgeSelectVehicle" class="block text-xs font-semibold text-slate-400 mb-1.5">Buscar por Placa / Nombre:</label>
+            <select id="badgeSelectVehicle" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 font-mono">
+              <!-- Options populated via JS -->
+            </select>
+          </div>
+
+          <div class="border-t border-slate-800 pt-4 space-y-3">
+            <p class="text-xs font-semibold text-slate-400">Modo de Vista de Carnet:</p>
+            <div class="grid grid-cols-2 gap-2">
+              <button id="badgeStyleBadge" class="badge-style-btn active text-xs font-bold py-2 px-3 rounded-lg border bg-amber-500/20 border-amber-500 text-amber-300 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-id-badge"></i> Credencial Vertical
+              </button>
+              <button id="badgeStyleCard" class="badge-style-btn text-xs font-bold py-2 px-3 rounded-lg border border-slate-700 text-slate-400 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-id-card"></i> Tarjeta CR80
+              </button>
+            </div>
+          </div>
+
+          <div class="border-t border-slate-800 pt-4">
+            <div class="bg-amber-950/40 border border-amber-500/30 p-3.5 rounded-xl text-xs text-amber-200/90 leading-relaxed">
+              <p class="font-bold text-amber-400 mb-1 flex items-center gap-1.5">
+                <i class="fa-solid fa-circle-info"></i> Importante:
+              </p>
+              El código QR generado en el carnet contiene un enlace permanente directo a la placa del vehículo. Cuando los documentos se renuevan en la base de datos, <strong>NO es necesario volver a imprimir el carnet ni cambiar el QR</strong>.
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Carnet Preview Studio -->
+        <div class="lg:col-span-8 bg-slate-900/60 rounded-2xl border border-slate-800 p-6 shadow-xl flex flex-col items-center justify-center min-h-[420px]">
+          <h3 class="font-outfit font-bold text-slate-400 text-xs uppercase tracking-widest mb-6">Vista Previa de Impresión</h3>
+          
+          <div id="singleBadgePreviewContainer" class="flex justify-center items-center w-full">
+            <!-- Dynamic Carnet Badge HTML Injected via JS -->
+          </div>
+
+          <div class="mt-6 flex items-center gap-3">
+            <button id="printSingleBadgeBtn" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm border border-slate-700">
+              <i class="fa-solid fa-print text-amber-400"></i> Imprimir Este Carnet
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- PRINTABLE BATCH CONTAINER (FOR @media print) -->
+      <div id="printBatchArea" class="hidden print:block">
+        <!-- Multiple carnets rendered here for printing -->
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- MODULO 3: BASE DE DATOS & EDICIÓN DE DOCUMENTOS                    -->
+    <!-- ================================================================= -->
+    <section id="view-database" class="hidden space-y-6">
+      
+      <!-- DB Header Controls -->
+      <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20 mb-2">
+            <i class="fa-solid fa-database"></i> Gestión de la Base de Datos
+          </span>
+          <h2 class="font-outfit text-2xl font-extrabold text-white">Registro de Vehículos y Renovación de Documentos</h2>
+          <p class="text-slate-400 text-sm mt-0.5">Actualice las fechas de vencimiento de SOAT, RTM y Licencias para mantener el estado de ingreso al día.</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <label class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm cursor-pointer shadow-lg shadow-emerald-600/20">
+            <i class="fa-solid fa-file-excel"></i> Importar Excel
+            <input type="file" id="excelFileInput" accept=".xlsx, .xls" class="hidden">
+          </label>
+          <button id="exportExcelBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm border border-slate-700">
+            <i class="fa-solid fa-download text-emerald-400"></i> Exportar a Excel
+          </button>
+          <button id="addNewVehicleBtn" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm shadow-lg shadow-amber-500/20">
+            <i class="fa-solid fa-plus"></i> Nuevo Vehículo
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters & Stats Bar -->
+      <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+        
+        <!-- Filter Tabs -->
+        <div class="flex items-center gap-2 overflow-x-auto">
+          <button id="dbFilterAll" class="db-filter-tab active px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950 transition-all">
+            Todos (<span id="filterCountAll">0</span>)
+          </button>
+          <button id="dbFilterVigentes" class="db-filter-tab px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-emerald-400 hover:bg-slate-700 transition-all border border-slate-700">
+            🟢 Vigentes (<span id="filterCountVigentes">0</span>)
+          </button>
+          <button id="dbFilterPorVencer" class="db-filter-tab px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-amber-400 hover:bg-slate-700 transition-all border border-slate-700">
+            🟡 Por Vencer (<span id="filterCountPorVencer">0</span>)
+          </button>
+          <button id="dbFilterVencidos" class="db-filter-tab px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-rose-400 hover:bg-slate-700 transition-all border border-slate-700">
+            🔴 Vencidos (<span id="filterCountVencidos">0</span>)
+          </button>
+        </div>
+
+        <!-- Search & Type Filter -->
+        <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+          <!-- CD Filter (Col X) -->
+          <select id="dbCdFilter" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-amber-400 font-semibold focus:outline-none focus:border-amber-500">
+            <option value="ALL">🏢 Todos los CD (Col. X)</option>
+          </select>
+
+          <!-- Empresa Filter (Col U) -->
+          <select id="dbEmpresaFilter" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-sky-400 font-semibold focus:outline-none focus:border-amber-500">
+            <option value="ALL">🏭 Todas las Empresas (Col. U)</option>
+          </select>
+
+          <!-- Categoria Licencia Filter (Col AP) -->
+          <select id="dbLicenciaFilter" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-emerald-400 font-semibold focus:outline-none focus:border-amber-500">
+            <option value="ALL">🪪 Todas las Licencias (Col. AP)</option>
+          </select>
+
+          <!-- Tipo Filter -->
+          <select id="dbTipoFilter" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500">
+            <option value="ALL">🛵🚗 Todos los Tipos</option>
+            <option value="CARRO">Carros</option>
+            <option value="MOTOCICLETA">Motocicletas</option>
+          </select>
+
+          <input type="text" id="dbSearchInput" placeholder="Buscar por placa, nombre o cédula..." 
+                 class="bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 w-full sm:w-56">
+        </div>
+      </div>
+
+      <!-- Main Data Table -->
+      <div class="bg-slate-900 rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-950 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+              <tr>
+                <th class="py-3.5 px-4">Placa</th>
+                <th class="py-3.5 px-4">Propietario / Colaborador</th>
+                <th class="py-3.5 px-4">Cédula</th>
+                <th class="py-3.5 px-4">Centro Distribución (CD)</th>
+                <th class="py-3.5 px-4">Empresa</th>
+                <th class="py-3.5 px-4">Tipo</th>
+                <th class="py-3.5 px-4">SOAT</th>
+                <th class="py-3.5 px-4">RTM</th>
+                <th class="py-3.5 px-4">Licencia</th>
+                <th class="py-3.5 px-4">Estado General</th>
+                <th class="py-3.5 px-4 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="dbTableBody" class="divide-y divide-slate-800/60 font-medium">
+              <!-- Injected via JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Table Pagination Footer -->
+        <div class="p-4 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between gap-4 text-xs text-slate-400">
+          <p>Mostrando <span id="pageStart" class="text-white font-bold">1</span> a <span id="pageEnd" class="text-white font-bold">25</span> de <span id="pageTotal" class="text-white font-bold">0</span> registros</p>
+          <div class="flex items-center gap-2">
+            <button id="prevPageBtn" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-3 py-1.5 rounded-lg border border-slate-700 disabled:opacity-40">Anterior</button>
+            <span id="currentPageNum" class="font-bold text-amber-400 px-2">1</span>
+            <button id="nextPageBtn" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-3 py-1.5 rounded-lg border border-slate-700 disabled:opacity-40">Siguiente</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================================================================= -->
+  <!-- MODAL DE EDICIÓN / RENOVACIÓN DE DOCUMENTOS                         -->
+  <!-- ================================================================= -->
+  <div id="editModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-fadeIn">
+      
+      <!-- Modal Header -->
+      <div class="p-5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+        <h3 id="modalTitle" class="font-outfit font-bold text-lg text-white flex items-center gap-2">
+          <i class="fa-solid fa-pen-to-square text-amber-400"></i> Renovación de Documentos
+        </h3>
+        <button id="closeModalBtn" class="text-slate-400 hover:text-white text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body Form -->
+      <form id="vehicleForm" class="p-6 space-y-4">
+        <input type="hidden" id="formVehicleId">
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Placa del Vehículo*</label>
+            <input type="text" id="formPlaca" required 
+                   class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-mono uppercase focus:border-amber-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Tipo de Vehículo*</label>
+            <select id="formTipoVehiculo" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none">
+              <option value="MOTOCICLETA">MOTOCICLETA</option>
+              <option value="CARRO">CARRO</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Nombre Completo del Colaborador/Propietario*</label>
+          <input type="text" id="formNombre" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Número de Cédula*</label>
+            <input type="text" id="formCedula" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-mono focus:border-amber-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Empresa / Contrata</label>
+            <input type="text" id="formEmpresa" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="border-t border-slate-800 pt-4 mt-2">
+          <h4 class="font-outfit font-bold text-xs text-amber-400 uppercase tracking-wider mb-3">Fechas de Vencimiento de Documentos</h4>
+          
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+                <span>SOAT:</span>
+                <span class="text-[11px] text-slate-500 font-normal">Fecha de expiración actual</span>
+              </label>
+              <input type="date" id="formSoat" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-mono focus:border-amber-500 focus:outline-none">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+                <span>Revisión Técnico-Mecánica (RTM):</span>
+                <span class="text-[11px] text-slate-500 font-normal">Fecha de expiración actual</span>
+              </label>
+              <input type="date" id="formRtm" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-mono focus:border-amber-500 focus:outline-none">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Categoría Licencia</label>
+                <input type="text" id="formLicCat" placeholder="ej: A2, B1" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white uppercase focus:border-amber-500 focus:outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Vencimiento Licencia</label>
+                <input type="date" id="formLicVenc" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-mono focus:border-amber-500 focus:outline-none">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
+          <button type="button" id="cancelFormBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-4 py-2 rounded-xl text-sm transition-all">Cancelar</button>
+          <button type="submit" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-2 rounded-xl text-sm transition-all shadow-lg shadow-amber-500/20">
+            Guardar Cambios
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="no-print border-t border-slate-800 bg-slate-950 py-4 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <p>© 2026 Centro de Distribución - Seguridad Vial y Control de Accesos</p>
+      <p class="text-slate-600">Base de datos sincronizada: <span class="text-slate-400 font-mono">ENCUESTA TRANSPORTE IN ITINERE.xlsx</span></p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
