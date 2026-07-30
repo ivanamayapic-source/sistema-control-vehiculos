@@ -29,18 +29,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (window.INITIAL_VEHICLES && window.INITIAL_VEHICLES.length !== parsed.length) {
-          vehicles = window.INITIAL_VEHICLES;
-          saveData();
-        } else {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           vehicles = parsed;
+        } else {
+          vehicles = window.INITIAL_VEHICLES || [];
+          saveData();
         }
       } catch (e) {
         console.error('Error parsing stored vehicles, falling back to initial data', e);
         vehicles = window.INITIAL_VEHICLES || [];
+        saveData();
       }
     } else {
       vehicles = window.INITIAL_VEHICLES || [];
+      saveData();
+    }
+
+    if (vehicles.length === 0 && window.INITIAL_VEHICLES && window.INITIAL_VEHICLES.length > 0) {
+      vehicles = window.INITIAL_VEHICLES;
       saveData();
     }
 
@@ -976,6 +982,20 @@ document.addEventListener('DOMContentLoaded', () => {
       renderDatabaseTable();
     }
   });
+
+  const resetInitialBtn = document.getElementById('resetInitialDataBtn');
+  if (resetInitialBtn) {
+    resetInitialBtn.addEventListener('click', () => {
+      if (confirm('¿Desea restablecer la base de datos con los 453 vehículos conductores originales de la encuesta?')) {
+        vehicles = window.INITIAL_VEHICLES || [];
+        saveData();
+        renderDatabaseTable();
+        renderBadgesList();
+        updateDashboardMetrics();
+        alert('Se han cargado los 453 vehículos conductores exitosamente.');
+      }
+    });
+  }
 
   // --------------------------------------------------------------------------
   // 8. EDIT MODAL FOR DOCUMENT RENEWALS
