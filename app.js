@@ -508,24 +508,102 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --------------------------------------------------------------------------
-  // 6. MODULO 2: ESTUDIO DE CARNETIZACION (BADGES)
+  // 6. MODULO 2: ESTUDIO DE CARNETIZACION (BADGES & FILTERS)
   // --------------------------------------------------------------------------
   const badgeSelectVehicle = document.getElementById('badgeSelectVehicle');
   const badgeStyleBadgeBtn = document.getElementById('badgeStyleBadge');
   const badgeStyleCardBtn = document.getElementById('badgeStyleCard');
+  const badgeCdFilter = document.getElementById('badgeCdFilter');
+  const badgeEmpresaFilter = document.getElementById('badgeEmpresaFilter');
+  const badgeStatusFilter = document.getElementById('badgeStatusFilter');
+  const badgeFilteredCountBadge = document.getElementById('badgeFilteredCountBadge');
   let currentBadgeStyle = 'vertical'; // 'vertical' or 'cr80'
 
-  function populateBadgeSelector() {
-    badgeSelectVehicle.innerHTML = '';
-    vehicles.forEach(v => {
-      const opt = document.createElement('option');
-      opt.value = v.id;
-      opt.textContent = `${v.placa} - ${v.nombre} (${v.tipoVehiculo})`;
-      badgeSelectVehicle.appendChild(opt);
+  function populateBadgeDropdownFilters() {
+    if (!badgeCdFilter || !badgeEmpresaFilter) return;
+
+    const cds = [...new Set(vehicles.map(v => (v.centroDistribucion || 'CEDI').trim()))].sort();
+    const empresas = [...new Set(vehicles.map(v => (v.empresa || 'CEDI').trim()))].sort();
+
+    badgeCdFilter.innerHTML = '<option value="ALL">🏢 Todos los CD</option>';
+    cds.forEach(cd => {
+      if (cd) {
+        const opt = document.createElement('option');
+        opt.value = cd;
+        opt.textContent = `🏢 CD: ${cd}`;
+        badgeCdFilter.appendChild(opt);
+      }
     });
-    document.getElementById('countSelectedToPrint').textContent = vehicles.length;
+
+    badgeEmpresaFilter.innerHTML = '<option value="ALL">🏭 Todas las Empresas</option>';
+    empresas.forEach(emp => {
+      if (emp) {
+        const opt = document.createElement('option');
+        opt.value = emp;
+        opt.textContent = `🏭 ${emp}`;
+        badgeEmpresaFilter.appendChild(opt);
+      }
+    });
   }
-  populateBadgeSelector();
+
+  function getFilteredBadgeVehicles() {
+    const cdVal = badgeCdFilter ? badgeCdFilter.value : 'ALL';
+    const empVal = badgeEmpresaFilter ? badgeEmpresaFilter.value : 'ALL';
+    const statusVal = badgeStatusFilter ? badgeStatusFilter.value : 'ALL';
+
+    return vehicles.filter(v => {
+      // 1. CD Filter
+      if (cdVal !== 'ALL' && (v.centroDistribucion || 'CEDI').trim() !== cdVal) {
+        return false;
+      }
+      // 2. Empresa Filter
+      if (empVal !== 'ALL' && (v.empresa || 'CEDI').trim() !== empVal) {
+        return false;
+      }
+      // 3. Document Status Filter (VIGENTE, POR_VENCER, VENCIDO)
+      if (statusVal !== 'ALL') {
+        const st = getVehicleOverallStatus(v);
+        if (statusVal === 'VIGENTE' && st !== 'APTO') return false;
+        if (statusVal === 'POR_VENCER' && st !== 'POR_VENCER') return false;
+        if (statusVal === 'VENCIDO' && st !== 'DENEGADO') return false;
+      }
+      return true;
+    });
+  }
+
+  function populateBadgeSelector() {
+    if (!badgeSelectVehicle) return;
+    const filtered = getFilteredBadgeVehicles();
+
+    badgeSelectVehicle.innerHTML = '';
+    if (filtered.length === 0) {
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = '-- No hay vehículos con este filtro --';
+      badgeSelectVehicle.appendChild(opt);
+    } else {
+      filtered.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.id;
+        opt.textContent = `${v.placa} - ${v.nombre} (${v.tipoVehiculo})`;
+        badgeSelectVehicle.appendChild(opt);
+      });
+    }
+
+    if (badgeFilteredCountBadge) {
+      badgeFilteredCountBadge.textContent = `${filtered.length} vehículos`;
+    }
+    const countToPrint = document.getElementById('countSelectedToPrint');
+    if (countToPrint) {
+      countToPrint.textContent = filtered.length;
+    }
+
+    renderSingleBadgePreview();
+  }
+
+  if (badgeCdFilter) badgeCdFilter.addEventListener('change', populateBadgeSelector);
+  if (badgeEmpresaFilter) badgeEmpresaFilter.addEventListener('change', populateBadgeSelector);
+  if (badgeStatusFilter) badgeStatusFilter.addEventListener('change', populateBadgeSelector);
 
   badgeSelectVehicle.addEventListener('change', () => renderSingleBadgePreview());
 
@@ -706,20 +784,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 50);
   });
 
-  // Batch Print All Carnets
+  // Batch Print Filtered Carnets
   document.getElementById('printBatchBtn').addEventListener('click', () => {
-    if (confirm(`¿Desea enviar a impresión los ${vehicles.length} carnets de la base de datos?`)) {
+    const filtered = getFilteredBadgeVehicles();
+    if (filtered.length === 0) {
+      alert('No hay vehículos para imprimir con los filtros seleccionados actualmente.');
+      return;
+    }
+
+    if (confirm(`¿Desea enviar a impresión los ${filtered.length} carnets seleccionados por el filtro?`)) {
       const printArea = document.getElementById('printBatchArea');
       printArea.innerHTML = '';
 
-      vehicles.forEach(v => {
+      filtered.forEach(v => {
         const badgeWrapper = document.createElement('div');
         badgeWrapper.innerHTML = generateBadgeHTML(v, currentBadgeStyle);
         printArea.appendChild(badgeWrapper);
       });
 
       setTimeout(() => {
-        vehicles.forEach(v => {
+        filtered.forEach(v => {
           const qrEls = printArea.querySelectorAll(`[id^="qr-code-single-${v.id}"]`);
           qrEls.forEach(qrEl => {
             qrEl.innerHTML = '';
@@ -1172,7 +1256,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initData();
   updateKPIs();
   populateDropdownFilters();
+  if (typeof populateBadgeDropdownFilters === 'function') populateBadgeDropdownFilters();
+  if (typeof populateBadgeSelector === 'function') populateBadgeSelector();
   renderDatabaseTable();
-  if (typeof renderBadgesList === 'function') renderBadgesList();
-  if (typeof populateBadgeSelect === 'function') populateBadgeSelect();
 });
