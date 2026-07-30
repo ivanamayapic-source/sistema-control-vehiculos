@@ -974,15 +974,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function getFilteredVehicles() {
+  function getBaseFilteredVehicles() {
     return vehicles.filter(v => {
-      const overall = getVehicleOverallStatus(v);
-      
-      // Filter by status tab
-      if (currentDbFilter === 'VIGENTES' && overall !== 'APTO') return false;
-      if (currentDbFilter === 'POR_VENCER' && overall !== 'POR_VENCER') return false;
-      if (currentDbFilter === 'VENCIDOS' && overall !== 'DENEGADO') return false;
-
       // Filter by tipo
       if (currentTipoFilter !== 'ALL' && v.tipoVehiculo !== currentTipoFilter) return false;
 
@@ -1007,7 +1000,60 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function updateFilterCounts() {
+    const baseSet = getBaseFilteredVehicles();
+    let vigentesCount = 0;
+    let porVencerCount = 0;
+    let vencidosCount = 0;
+
+    baseSet.forEach(v => {
+      const st = getVehicleOverallStatus(v);
+      if (st === 'APTO') vigentesCount++;
+      else if (st === 'POR_VENCER') porVencerCount++;
+      else vencidosCount++;
+    });
+
+    const total = baseSet.length;
+
+    // Filter tab button counts
+    const cntAll = document.getElementById('filterCountAll');
+    const cntVig = document.getElementById('filterCountVigentes');
+    const cntPor = document.getElementById('filterCountPorVencer');
+    const cntVen = document.getElementById('filterCountVencidos');
+
+    if (cntAll) cntAll.textContent = total;
+    if (cntVig) cntVig.textContent = vigentesCount;
+    if (cntPor) cntPor.textContent = porVencerCount;
+    if (cntVen) cntVen.textContent = vencidosCount;
+
+    // Update top KPI badges
+    const kTotal = document.getElementById('kpiTotal');
+    const kVig = document.getElementById('kpiVigentes');
+    const kPor = document.getElementById('kpiPorVencer');
+    const kVen = document.getElementById('kpiVencidos');
+
+    if (kTotal) kTotal.textContent = total;
+    if (kVig) kVig.textContent = vigentesCount;
+    if (kPor) kPor.textContent = porVencerCount;
+    if (kVen) kVen.textContent = vencidosCount;
+  }
+
+  function getFilteredVehicles() {
+    const baseSet = getBaseFilteredVehicles();
+    return baseSet.filter(v => {
+      const overall = getVehicleOverallStatus(v);
+      
+      // Filter by status tab
+      if (currentDbFilter === 'VIGENTES' && overall !== 'APTO') return false;
+      if (currentDbFilter === 'POR_VENCER' && overall !== 'POR_VENCER') return false;
+      if (currentDbFilter === 'VENCIDOS' && overall !== 'DENEGADO') return false;
+
+      return true;
+    });
+  }
+
   function renderDatabaseTable() {
+    updateFilterCounts();
     const filtered = getFilteredVehicles();
     const total = filtered.length;
 
