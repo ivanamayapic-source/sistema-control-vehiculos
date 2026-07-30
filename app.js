@@ -123,10 +123,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initData();
 
-  // --------------------------------------------------------------------------
-  // 2. DOCUMENT STATUS CALCULATOR
-  // --------------------------------------------------------------------------
-  const TODAY = new Date('2026-07-29'); // Synchronized with system date
+  function getTodayDate() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  }
 
   function parseDate(dateStr) {
     if (!dateStr) return null;
@@ -138,8 +139,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const d = parseDate(dateStr);
     if (!d) return { status: 'VENCIDO', label: 'Sin Registro', days: -999, class: 'bg-rose-950/80 text-rose-400 border-rose-500/40' };
     
-    const diffTime = d - TODAY;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const today = getTodayDate();
+    const targetDate = new Date(d);
+    targetDate.setHours(0, 0, 0, 0);
+
+    const diffTime = targetDate - today;
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) {
       return { status: 'VENCIDO', label: 'Vencido', days: diffDays, class: 'bg-rose-950/80 text-rose-400 border-rose-500/40' };
