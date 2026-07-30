@@ -376,6 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderVehicleVerification(v) {
+    window.currentVerifiedVehicle = v;
     const overall = getVehicleOverallStatus(v);
     const soat = calculateDocStatus(v.soatVencimiento);
     const rtm = calculateDocStatus(v.rtmVencimiento);
@@ -423,16 +424,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const iconHtml = v.tipoVehiculo === 'MOTOCICLETA' ? '<i class="fa-solid fa-motorcycle"></i>' : '<i class="fa-solid fa-car"></i>';
     document.getElementById('resVehicleIcon').innerHTML = iconHtml;
 
-    // Doc cards
-    renderDocCard('Soat', soat);
-    renderDocCard('Rtm', rtm);
-    renderDocCard('Lic', lic, v.licenciaCategoria);
-
-    // Save current active vehicle for printing
-    window.currentVerifiedVehicle = v;
+    // Doc cards with explicit raw date values
+    renderDocCard('Soat', soat, v.soatVencimiento);
+    renderDocCard('Rtm', rtm, v.rtmVencimiento);
+    renderDocCard('Lic', lic, v.licenciaVencimiento, v.licenciaCategoria);
   }
 
-  function renderDocCard(prefix, docState, cat = null) {
+  function renderDocCard(prefix, docState, dateVal, cat = null) {
     const card = document.getElementById(`docCard${prefix}`);
     const tag = document.getElementById(`tag${prefix}`);
     const dateEl = document.getElementById(`date${prefix}`);
@@ -453,10 +451,20 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('catLic').textContent = cat || 'B1';
     }
 
-    dateEl.textContent = docState.days === -999 ? 'No aplica / Sin fecha' : parseDate(docState.days === -999 ? '' : (prefix === 'Soat' ? window.currentVerifiedVehicle?.soatVencimiento : prefix === 'Rtm' ? window.currentVerifiedVehicle?.rtmVencimiento : window.currentVerifiedVehicle?.licenciaVencimiento))?.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' }) || 'No registrada';
+    // Format and display date string
+    if (dateVal && dateVal !== '0' && dateVal !== 'N/A') {
+      const dObj = parseDate(dateVal);
+      if (dObj) {
+        dateEl.textContent = dObj.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' });
+      } else {
+        dateEl.textContent = dateVal;
+      }
+    } else {
+      dateEl.textContent = 'Sin Registro';
+    }
     
     if (docState.days === -999) {
-      daysEl.textContent = 'Sin registro';
+      daysEl.textContent = 'Sin registro de fecha';
       daysEl.className = 'text-[11px] font-semibold text-slate-500';
     } else if (docState.days < 0) {
       daysEl.textContent = `Vencido hace ${Math.abs(docState.days)} días`;
@@ -678,8 +686,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <p class="text-[8px] font-bold text-slate-900 uppercase tracking-wider mt-1">Escanear en Portería</p>
             </div>
 
-            <!-- Owner Info -->
-            <div class="text-left bg-slate-900/90 border border-slate-800 p-3 rounded-xl space-y-1">
+            <!-- Owner Info & Document Expirations -->
+            <div class="text-left bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl space-y-1.5">
               <div>
                 <p class="text-[8px] uppercase tracking-wider text-slate-400 font-semibold">Conductor / Propietario:</p>
                 <p class="text-xs font-bold text-white truncate">${v.nombre}</p>
@@ -687,11 +695,27 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/80">
                 <div>
                   <p class="text-[8px] uppercase tracking-wider text-slate-400 font-semibold">Cédula:</p>
-                  <p class="text-xs font-mono font-bold text-slate-200">${v.cedula}</p>
+                  <p class="text-[10px] font-mono font-bold text-slate-200">${v.cedula}</p>
                 </div>
                 <div>
                   <p class="text-[8px] uppercase tracking-wider text-slate-400 font-semibold">Empresa:</p>
                   <p class="text-[10px] font-semibold text-amber-400 truncate">${v.empresa || 'CEDI'}</p>
+                </div>
+              </div>
+
+              <!-- Document Expirations -->
+              <div class="pt-1.5 border-t border-slate-800/80 grid grid-cols-3 gap-1 text-[7.5px] leading-tight">
+                <div>
+                  <span class="text-slate-400 font-semibold block">SOAT</span>
+                  <span class="font-mono text-amber-300 font-bold">${v.soatVencimiento || 'N/A'}</span>
+                </div>
+                <div>
+                  <span class="text-slate-400 font-semibold block">RTM</span>
+                  <span class="font-mono text-amber-300 font-bold">${v.rtmVencimiento || 'N/A'}</span>
+                </div>
+                <div>
+                  <span class="text-slate-400 font-semibold block">LIC (${v.licenciaCategoria || 'B1'})</span>
+                  <span class="font-mono text-amber-300 font-bold">${v.licenciaVencimiento || 'N/A'}</span>
                 </div>
               </div>
             </div>
@@ -742,6 +766,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="flex items-center gap-3 text-[10px]">
                   <span class="text-slate-300 font-mono font-semibold">C.C. ${v.cedula}</span>
                   <span class="text-amber-400 font-bold truncate">${v.empresa || 'CEDI'}</span>
+                </div>
+                <!-- Document Dates -->
+                <div class="grid grid-cols-3 gap-1 pt-1 border-t border-slate-800 text-[8px]">
+                  <div>
+                    <span class="text-slate-400 font-semibold">SOAT:</span> <span class="font-mono font-bold text-amber-300">${v.soatVencimiento || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span class="text-slate-400 font-semibold">RTM:</span> <span class="font-mono font-bold text-amber-300">${v.rtmVencimiento || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span class="text-slate-400 font-semibold">LIC (${v.licenciaCategoria || 'B1'}):</span> <span class="font-mono font-bold text-amber-300">${v.licenciaVencimiento || 'N/A'}</span>
+                  </div>
                 </div>
               </div>
 
