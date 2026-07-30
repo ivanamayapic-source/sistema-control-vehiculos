@@ -10,15 +10,15 @@ document.addEventListener('DOMContentLoaded', () => {
   let vehicles = [];
   const STORAGE_KEY = 'CEDI_VEHICLES_DATA';
 
-  // Supabase Cloud Sync Configuration
-  const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || '';
+  // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
+  const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
   const SUPABASE_KEY = window.SUPABASE_KEY || localStorage.getItem('SUPABASE_KEY') || '';
   let supabaseClient = null;
 
   if (window.supabase && SUPABASE_URL && SUPABASE_KEY) {
     try {
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      console.log('Supabase Cloud Database Conectado Correctamente');
+      console.log('Supabase Cloud Database (zamqqaiipwatbaubvlpq) Conectado Correctamente');
     } catch (err) {
       console.error('Error conectando a Supabase:', err);
     }
