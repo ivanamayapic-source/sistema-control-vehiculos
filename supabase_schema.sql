@@ -1,8 +1,8 @@
 -- ==========================================================================
--- SCHEMA Y TABLA SUPABASE PARA SISTEMA DE CONTROL VEHICULAR CEDI
+-- SCHEMA Y TABLA SUPABASE PARA SISTEMA DE CONTROL VEHICULAR CEDI (IDEMPOTENTE)
 -- ==========================================================================
 
--- 1. Crear tabla vehiculos
+-- 1. Crear tabla vehiculos si no existe
 CREATE TABLE IF NOT EXISTS public.vehiculos (
   id TEXT PRIMARY KEY,
   placa TEXT NOT NULL UNIQUE,
@@ -22,7 +22,11 @@ CREATE TABLE IF NOT EXISTS public.vehiculos (
 -- 2. Habilitar RLS (Row Level Security)
 ALTER TABLE public.vehiculos ENABLE ROW LEVEL SECURITY;
 
--- 3. Crear Políticas de Permiso (Lectura y Escritura para la App Web)
+-- 3. Eliminar politicas anteriores si ya existen para evitar conflicto 42710
+DROP POLICY IF EXISTS "Permitir lectura publica a vehiculos" ON public.vehiculos;
+DROP POLICY IF EXISTS "Permitir insercion y actualizacion publica" ON public.vehiculos;
+
+-- 4. Crear Políticas de Permiso
 CREATE POLICY "Permitir lectura publica a vehiculos"
   ON public.vehiculos FOR SELECT
   USING (true);
@@ -32,7 +36,7 @@ CREATE POLICY "Permitir insercion y actualizacion publica"
   USING (true)
   WITH CHECK (true);
 
--- 4. Índice para búsquedas rápidas por placa y cédula
+-- 5. Índices de optimización
 CREATE INDEX IF NOT EXISTS idx_vehiculos_placa ON public.vehiculos (placa);
 CREATE INDEX IF NOT EXISTS idx_vehiculos_cedula ON public.vehiculos (cedula);
 CREATE INDEX IF NOT EXISTS idx_vehiculos_cd ON public.vehiculos (centro_distribucion);
