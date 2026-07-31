@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V18_TYPO_RESOLVED';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V19_CONSOLIDATED';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of typo-resolved latest dataset
+    // Clear all obsolete old caches to force fresh load of consolidated dataset
     try {
       localStorage.removeItem('CEDI_VEHICLES_DATA');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_DATA_GEOVICTORIA');
@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V15_ROLE_MAPPED');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V16_CD_COLUMN_X');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V17_LATEST_COL_B');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V18_TYPO_RESOLVED');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
@@ -1442,14 +1443,27 @@ document.addEventListener('DOMContentLoaded', () => {
           rowsByCedulaMap.get(resolvedCedula).push(item);
         });
 
-        // Select single latest submission per collaborator
-        const latestSubmissionRows = [];
-        rowsByCedulaMap.forEach((list) => {
-          list.sort((a, b) => b.numTime - a.numTime);
-          latestSubmissionRows.push(list[0].row);
-        });
+        // Helper for browser consolidation: get first non-empty valid field value from newest to older rows
+        const getConsolidatedField = (rowList, fieldKeys, isDateField = false, defaultVal = '') => {
+          for (const item of rowList) {
+            const r = item.row;
+            for (const key of fieldKeys) {
+              const val = (r[key] || '').toString().trim();
+              if (!val) continue;
+              const u = val.toUpperCase();
+              if (u === '0' || u === 'N/A' || u === 'NO APLICA' || u === 'VVV' || u === 'SYSTEM.XML.XMLELEMENT') continue;
+              if (isDateField) {
+                const formatted = formatDateISO(val);
+                if (formatted && formatted !== 'N/A') return formatted;
+              } else {
+                return val;
+              }
+            }
+          }
+          return isDateField ? 'N/A' : defaultVal;
+        };
 
-        // Map strictly enforcing 1 UNIQUE record per (cedula + tipoVehiculo + placa) from latest submission
+        // Map strictly enforcing 1 UNIQUE record per (cedula + tipoVehiculo + placa) with field consolidation
         const dedupedRecordsMap = new Map();
         let exemptCount = 0;
         let activeCount = 0;
@@ -1457,9 +1471,13 @@ document.addEventListener('DOMContentLoaded', () => {
         let ignoredRoleCount = 0;
         let duplicatesFiltered = 0;
 
-        latestSubmissionRows.forEach((row) => {
-          // 2. Rol Vial Filter (Col. AM)
-          const rolVial = (row['SELECCIONE EL ROL VIAL HABITUAL QUE UTILIZA PARA DESPLAZARSE CASA-TRABAJO-CASA'] || row['ROL VIAL'] || '').toString().trim();
+        rowsByCedulaMap.forEach((list, cleanCedula) => {
+          // Sort from newest to oldest
+          list.sort((a, b) => b.numTime - a.numTime);
+          const latestRow = list[0].row;
+
+          // Consolidated Rol Vial
+          const rolVial = getConsolidatedField(list, ['SELECCIONE EL ROL VIAL HABITUAL QUE UTILIZA PARA DESPLAZARSE CASA-TRABAJO-CASA', 'ROL VIAL', 'AM'], false, '');
           const rolLower = rolVial.toLowerCase();
           const isConductorMoto = rolLower.includes('conductor') && rolLower.includes('motocicleta');
           const isConductorVehiculo = rolLower.includes('conductor') && (rolLower.includes('veh') || rolLower.includes('carro'));
@@ -1469,14 +1487,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
           }
 
-          const rawCedula = (row['CEDULA (SIN PUNTOS)'] || row['Cedula'] || row['CEDULA'] || '').toString();
-          const cleanCedula = rawCedula.replace(/[^0-9]/g, '').replace(/^0+/, '');
-          if (!cleanCedula) return;
-
-          const nombre = (row['NOMBRE COMPLETO Y APELLIDOS'] || row['Nombre'] || row['NOMBRE'] || '').toString().trim();
+          const nombre = getConsolidatedField(list, ['NOMBRE COMPLETO Y APELLIDOS', 'Nombre', 'NOMBRE', 'O'], false, '');
           if (!nombre) return;
 
-          const empresa = (row['EMPRESA'] || row['Empresa'] || 'CEDI').toString().trim();
+          const empresa = getConsolidatedField(list, ['EMPRESA', 'Empresa', 'U'], false, 'CEDI');
           const empresaUpper = empresa.toUpperCase();
 
           // 1. ABI, HONOR, RENTAS bypass active check
@@ -1492,64 +1506,65 @@ document.addEventListener('DOMContentLoaded', () => {
             exemptCount++;
           }
 
-          // 5. Vehicle Type Filter (Col. BK)
-          const tipoVehiculoRaw = (row['TIPO DE VEHICULO'] || row['Tipo'] || '').toString().toUpperCase();
-          let tipoVehiculo = '';
-          if (tipoVehiculoRaw.includes('MOTO')) {
-            tipoVehiculo = 'MOTOCICLETA';
-          } else if (tipoVehiculoRaw.includes('CARRO') || tipoVehiculoRaw.includes('CAMIONETA')) {
-            tipoVehiculo = 'CARRO';
-          } else {
-            if (isConductorMoto) tipoVehiculo = 'MOTOCICLETA';
-            else if (isConductorVehiculo) tipoVehiculo = 'CARRO';
-            else return;
-          }
+          // Consolidated Vehicle Type (Col BK)
+          const tipoVehiculoRaw = getConsolidatedField(list, ['TIPO DE VEHICULO', 'Tipo', 'BK'], false, '').toUpperCase();
 
-          // 3 & 4. License extraction based on Rol Vial
-          let rawLicCat = '';
-          let rawLicVenc = '';
+          const targetVehicles = [];
 
           if (isConductorMoto) {
-            rawLicCat = row['CATEGORIA DE LICENCIA OPCION 1'] || row['CATEGORIA LICENCIA'] || row['CATEGORIA'] || '';
-            rawLicVenc = row['FECHA VENCIMIENTO OPCION 1'] || row['FECHA VENCIMIENTO LICENCIA'] || '';
-          } else if (isConductorVehiculo) {
-            rawLicCat = row['CATEGORIA DE LICENCIA OPCION 2'] || row['CATEGORIA LICENCIA OPCION 2'] || '';
-            rawLicVenc = row['FECHA VENCIMIENTO LICENCIA OPCION 2'] || row['FECHA VENCIMIENTO OPCION 2'] || '';
+            const rawLicCatM = getConsolidatedField(list, ['CATEGORIA DE LICENCIA OPCION 1', 'CATEGORIA LICENCIA', 'CATEGORIA', 'AP'], false, '');
+            const rawLicVencM = getConsolidatedField(list, ['FECHA VENCIMIENTO OPCION 1', 'FECHA VENCIMIENTO LICENCIA', 'AS'], true, 'N/A');
+            targetVehicles.push({
+              tipoVehiculo: 'MOTOCICLETA',
+              licCat: rawLicCatM ? rawLicCatM.toUpperCase() : 'SIN CATEGORÍA',
+              licVenc: rawLicVencM
+            });
           }
 
-          let placa = (row['PLACA'] || row['Placa'] || row['placa'] || '').toString().trim().toUpperCase();
-          if (!placa || placa === '0' || placa === 'N/A' || placa === 'NO APLICA' || placa === 'VVV') {
-            placa = `CC-${cleanCedula}-${tipoVehiculo}`;
+          if (isConductorVehiculo) {
+            const rawLicCatV = getConsolidatedField(list, ['CATEGORIA DE LICENCIA OPCION 2', 'CATEGORIA LICENCIA OPCION 2', 'AV'], false, '');
+            const rawLicVencV = getConsolidatedField(list, ['FECHA VENCIMIENTO LICENCIA OPCION 2', 'FECHA VENCIMIENTO OPCION 2', 'AY'], true, 'N/A');
+            targetVehicles.push({
+              tipoVehiculo: 'CARRO',
+              licCat: rawLicCatV ? rawLicCatV.toUpperCase() : 'SIN CATEGORÍA',
+              licVenc: rawLicVencV
+            });
           }
 
-          // 6 & 7. Deduplication Key: Cedula + TipoVehiculo + Placa (Supports multiple vehicles per collaborator)
-          const dedupKey = `${cleanCedula}_${tipoVehiculo}_${placa}`;
-          if (dedupedRecordsMap.has(dedupKey)) {
-            duplicatesFiltered++;
-            return;
-          }
+          let placaBase = getConsolidatedField(list, ['PLACA', 'Placa', 'placa', 'BB'], false, '').toUpperCase();
 
-          const rawSoat = row['FECHA VENCIMIENTO SOAT'] || row['SOAT'] || '';
-          const rawRtm = row['FECHA VENCIMIENTO RTM'] || row['RTM'] || '';
+          const rawSoat = getConsolidatedField(list, ['FECHA VENCIMIENTO SOAT', 'SOAT', 'BE'], true, 'N/A');
+          const rawRtm = getConsolidatedField(list, ['FECHA VENCIMIENTO RTM', 'RTM', 'BH'], true, 'N/A');
+          const rawCd = getConsolidatedField(list, ['CENTRO DE DISTRIBUCION', 'CD', 'X'], false, 'CD BUCARAMANGA').toUpperCase();
+          const cdClean = (rawCd && rawCd !== '0' && rawCd !== 'N/A' && rawCd !== 'NO APLICA') ? rawCd : 'CD BUCARAMANGA';
+          const cargo = getConsolidatedField(list, ['POSICIONES', 'CARGO', 'R'], false, 'COLABORADOR');
 
-          const updatedSoat = formatDateISO(rawSoat);
-          const updatedRtm = formatDateISO(rawRtm);
-          const updatedLicCat = rawLicCat ? rawLicCat.toString().toUpperCase() : '';
-          const updatedLicVenc = formatDateISO(rawLicVenc);
+          targetVehicles.forEach((tv) => {
+            let placa = placaBase;
+            if (!placa || placa === '0' || placa === 'N/A' || placa === 'NO APLICA' || placa === 'VVV') {
+              placa = `CC-${cleanCedula}-${tv.tipoVehiculo}`;
+            }
 
-          dedupedRecordsMap.set(dedupKey, {
-            id: (dedupedRecordsMap.size + 1).toString(),
-            placa,
-            nombre,
-            cedula: cleanCedula,
-            tipoVehiculo,
-            empresa,
-            centroDistribucion: row['CENTRO DE DISTRIBUCION'] || row['CD'] || 'CEDI',
-            cargo: row['POSICIONES'] || row['CARGO'] || 'COLABORADOR',
-            soatVencimiento: (updatedSoat && updatedSoat !== 'N/A') ? updatedSoat : 'N/A',
-            rtmVencimiento: (updatedRtm && updatedRtm !== 'N/A') ? updatedRtm : 'N/A',
-            licenciaCategoria: updatedLicCat || 'SIN CATEGORÍA',
-            licenciaVencimiento: (updatedLicVenc && updatedLicVenc !== 'N/A') ? updatedLicVenc : 'N/A'
+            const dedupKey = `${cleanCedula}_${tv.tipoVehiculo}_${placa}`;
+            if (dedupedRecordsMap.has(dedupKey)) {
+              duplicatesFiltered++;
+              return;
+            }
+
+            dedupedRecordsMap.set(dedupKey, {
+              id: (dedupedRecordsMap.size + 1).toString(),
+              placa,
+              nombre,
+              cedula: cleanCedula,
+              tipoVehiculo: tv.tipoVehiculo,
+              empresa,
+              centroDistribucion: cdClean,
+              cargo,
+              soatVencimiento: rawSoat,
+              rtmVencimiento: rawRtm,
+              licenciaCategoria: tv.licCat,
+              licenciaVencimiento: tv.licVenc
+            });
           });
         });
 
