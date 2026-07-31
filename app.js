@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V4';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V6_FIX';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,10 +25,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear stale old caches
+    // Clear all obsolete old caches to force fresh load of 255 active drivers
     try {
       localStorage.removeItem('CEDI_VEHICLES_DATA');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_DATA_GEOVICTORIA');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V4');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
@@ -66,23 +67,28 @@ document.addEventListener('DOMContentLoaded', () => {
   async function syncWithSupabase() {
     if (!supabaseClient) return;
     try {
-      const { data, error } = await supabaseClient.from('vehiculos').select('*');
-      if (!error && data && data.length > 0) {
-        vehicles = data.map(item => ({
-          id: item.id,
-          placa: item.placa,
-          nombre: item.nombre,
-          cedula: item.cedula,
-          tipoVehiculo: item.tipo_vehiculo,
-          empresa: item.empresa,
-          centroDistribucion: item.centro_distribucion,
-          cargo: item.cargo,
-          soatVencimiento: item.soat_vencimiento,
-          rtmVencimiento: item.rtm_vencimiento,
-          licenciaCategoria: item.licencia_categoria,
-          licenciaVencimiento: item.licencia_vencimiento
-        }));
-        saveDataLocally();
+      // Upsert local active driver records to Supabase to keep cloud database synchronized with the 255 active drivers
+      const recordsToUpsert = vehicles.map(v => ({
+        id: v.id,
+        placa: v.placa,
+        nombre: v.nombre,
+        cedula: v.cedula,
+        tipo_vehiculo: v.tipoVehiculo,
+        empresa: v.empresa || 'CEDI',
+        centro_distribucion: v.centroDistribucion || 'CEDI',
+        cargo: v.cargo || 'COLABORADOR',
+        soat_vencimiento: v.soatVencimiento || null,
+        rtm_vencimiento: v.rtmVencimiento || null,
+        licencia_categoria: v.licenciaCategoria || 'B1',
+        licencia_vencimiento: v.licenciaVencimiento || null,
+        updated_at: new Date().toISOString()
+      }));
+
+      const { error } = await supabaseClient.from('vehiculos').upsert(recordsToUpsert, { onConflict: 'placa' });
+      if (error) {
+        console.error('Supabase cloud sync error:', error);
+      } else {
+        console.log('Supabase Cloud Database sincronizado exitosamente con los 255 activos');
       }
     } catch (e) {
       console.error('Supabase fetch error:', e);
