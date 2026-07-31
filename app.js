@@ -137,8 +137,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function parseDate(dateStr) {
     if (!dateStr) return null;
-    const d = new Date(dateStr + 'T00:00:00');
+    const str = dateStr.toString().trim();
+    if (!str || str === '0' || str === 'N/A' || str.toUpperCase() === 'SIN REGISTRO') return null;
+
+    // Handle Excel serial date numbers like 46240
+    const num = Number(str);
+    if (!isNaN(num) && num > 30000 && num < 60000) {
+      const baseDate = new Date(1899, 11, 30);
+      return new Date(baseDate.getTime() + Math.floor(num) * 86400000);
+    }
+
+    // Handle YYYY-MM-DD or ISO date string
+    const d = new Date(str.includes('T') ? str : str + 'T00:00:00');
     return isNaN(d.getTime()) ? null : d;
+  }
+
+  function formatDateISO(dateStr) {
+    const d = parseDate(dateStr);
+    if (!d) return 'N/A';
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   }
 
   function calculateDocStatus(dateStr) {
@@ -723,15 +743,15 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="pt-1.5 border-t border-slate-800/80 grid grid-cols-3 gap-1 text-[7.5px] leading-tight">
                 <div>
                   <span class="text-slate-400 font-semibold block">SOAT</span>
-                  <span class="font-mono text-amber-300 font-bold">${v.soatVencimiento || 'N/A'}</span>
+                  <span class="font-mono text-amber-300 font-bold">${formatDateISO(v.soatVencimiento)}</span>
                 </div>
                 <div>
                   <span class="text-slate-400 font-semibold block">RTM</span>
-                  <span class="font-mono text-amber-300 font-bold">${v.rtmVencimiento || 'N/A'}</span>
+                  <span class="font-mono text-amber-300 font-bold">${formatDateISO(v.rtmVencimiento)}</span>
                 </div>
                 <div>
                   <span class="text-slate-400 font-semibold block">LIC (${v.licenciaCategoria || 'B1'})</span>
-                  <span class="font-mono text-amber-300 font-bold">${v.licenciaVencimiento || 'N/A'}</span>
+                  <span class="font-mono text-amber-300 font-bold">${formatDateISO(v.licenciaVencimiento)}</span>
                 </div>
               </div>
             </div>
@@ -791,13 +811,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <!-- Document Dates -->
                 <div class="grid grid-cols-3 gap-1 pt-1 border-t border-slate-800 text-[8px]">
                   <div>
-                    <span class="text-slate-400 font-semibold">SOAT:</span> <span class="font-mono font-bold text-amber-300">${v.soatVencimiento || 'N/A'}</span>
+                    <span class="text-slate-400 font-semibold">SOAT:</span> <span class="font-mono font-bold text-amber-300">${formatDateISO(v.soatVencimiento)}</span>
                   </div>
                   <div>
-                    <span class="text-slate-400 font-semibold">RTM:</span> <span class="font-mono font-bold text-amber-300">${v.rtmVencimiento || 'N/A'}</span>
+                    <span class="text-slate-400 font-semibold">RTM:</span> <span class="font-mono font-bold text-amber-300">${formatDateISO(v.rtmVencimiento)}</span>
                   </div>
                   <div>
-                    <span class="text-slate-400 font-semibold">LIC (${v.licenciaCategoria || 'B1'}):</span> <span class="font-mono font-bold text-amber-300">${v.licenciaVencimiento || 'N/A'}</span>
+                    <span class="text-slate-400 font-semibold">LIC (${v.licenciaCategoria || 'B1'}):</span> <span class="font-mono font-bold text-amber-300">${formatDateISO(v.licenciaVencimiento)}</span>
                   </div>
                 </div>
               </div>
