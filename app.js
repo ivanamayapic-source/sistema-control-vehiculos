@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_VEHICLES_DATA';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_DATA_GEOVICTORIA';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length >= 400) {
+        if (Array.isArray(parsed) && parsed.length >= 200) {
           vehicles = parsed;
         } else {
           vehicles = initialList;
@@ -1159,13 +1159,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetInitialBtn = document.getElementById('resetInitialDataBtn');
   if (resetInitialBtn) {
     resetInitialBtn.addEventListener('click', () => {
-      if (confirm('¿Desea restablecer la base de datos con los 453 vehículos conductores originales de la encuesta?')) {
+      if (confirm('¿Desea restablecer la base de datos con los 255 vehículos conductores de personal activo (Geovictoria)?')) {
         vehicles = window.INITIAL_VEHICLES || [];
         saveData();
         renderDatabaseTable();
         renderBadgesList();
         updateDashboardMetrics();
-        alert('Se han cargado los 453 vehículos conductores exitosamente.');
+        alert('Se han cargado los 255 vehículos conductores activos de Geovictoria exitosamente.');
       }
     });
   }
