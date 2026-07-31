@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V17_LATEST_COL_B';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V18_TYPO_RESOLVED';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of 243 latest submission vehicles
+    // Clear all obsolete old caches to force fresh load of typo-resolved latest dataset
     try {
       localStorage.removeItem('CEDI_VEHICLES_DATA');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_DATA_GEOVICTORIA');
@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_REALTIME_V13_DYNAMIC_LATEST_FILE');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V15_ROLE_MAPPED');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V16_CD_COLUMN_X');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V17_LATEST_COL_B');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
@@ -1215,13 +1216,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetInitialBtn = document.getElementById('resetInitialDataBtn');
   if (resetInitialBtn) {
     resetInitialBtn.addEventListener('click', () => {
-      if (confirm('¿Desea restablecer la base de datos con los 243 vehículos de las respuestas más recientes (Col. B)?')) {
+      if (confirm('¿Desea restablecer la base de datos con los 242 vehículos de las respuestas más recientes (Col. B)?')) {
         vehicles = window.INITIAL_VEHICLES || [];
         saveData();
         renderDatabaseTable();
         renderBadgesList();
         updateDashboardMetrics();
-        alert('Se han cargado los 243 vehículos de las respuestas más recientes exitosamente.');
+        alert('Se han cargado los 242 vehículos de las respuestas más recientes exitosamente.');
       }
     });
   }
@@ -1400,13 +1401,31 @@ document.addEventListener('DOMContentLoaded', () => {
           (window.INITIAL_VEHICLES || vehicles).map(v => (v.cedula || '').toString().replace(/[^0-9]/g, '').replace(/^0+/, ''))
         );
 
-        // 1. Group rows by clean Cedula and select EXCLUSIVELY the single latest row by Col B (Hora de inicio)
+        // Map normalized full name -> cedula from INITIAL_VEHICLES to resolve employee digit typos
+        const geoNameMap = new Map();
+        (window.INITIAL_VEHICLES || vehicles).forEach(v => {
+          if (v.nombre && v.cedula) {
+            const normN = v.nombre.toString().trim().toUpperCase().replace(/[^A-Z0-9 ]/g, '').replace(/\s+/g, ' ');
+            if (normN) geoNameMap.set(normN, v.cedula);
+          }
+        });
+
+        // 1. Group rows by clean Cedula (or resolved name cedula) and select EXCLUSIVELY the single latest row by Col B (Hora de inicio)
         const rowsByCedulaMap = new Map();
 
         jsonData.forEach((row) => {
           const rawCedula = (row['CEDULA (SIN PUNTOS)'] || row['Cedula'] || row['CEDULA'] || '').toString();
           const cleanCedula = rawCedula.replace(/[^0-9]/g, '').replace(/^0+/, '');
-          if (!cleanCedula) return;
+          
+          const rawNombre = (row['NOMBRE COMPLETO Y APELLIDOS'] || row['Nombre'] || row['NOMBRE'] || '').toString().trim().toUpperCase();
+          const normNombre = rawNombre.replace(/[^A-Z0-9 ]/g, '').replace(/\s+/g, ' ');
+
+          let resolvedCedula = cleanCedula;
+          if (!activeCedulas.has(cleanCedula) && geoNameMap.has(normNombre)) {
+            resolvedCedula = geoNameMap.get(normNombre);
+          }
+
+          if (!resolvedCedula) return;
 
           const rawTime = row['Hora de inicio'] || row['HORA DE INICIO'] || row['Hora inicio'] || row['B'] || 0;
           let numTime = parseFloat(rawTime);
@@ -1415,12 +1434,12 @@ document.addEventListener('DOMContentLoaded', () => {
             numTime = isNaN(dt.getTime()) ? 0 : dt.getTime();
           }
 
-          const item = { row, cleanCedula, numTime };
+          const item = { row, cleanCedula: resolvedCedula, numTime };
 
-          if (!rowsByCedulaMap.has(cleanCedula)) {
-            rowsByCedulaMap.set(cleanCedula, []);
+          if (!rowsByCedulaMap.has(resolvedCedula)) {
+            rowsByCedulaMap.set(resolvedCedula, []);
           }
-          rowsByCedulaMap.get(cleanCedula).push(item);
+          rowsByCedulaMap.get(resolvedCedula).push(item);
         });
 
         // Select single latest submission per collaborator
