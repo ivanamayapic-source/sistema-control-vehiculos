@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_REALTIME_V13_DYNAMIC_LATEST_FILE';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V15_ROLE_MAPPED';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of latest dynamic dataset (284 vehicles)
+    // Clear all obsolete old caches to force fresh load of 344 role-mapped vehicles
     try {
       localStorage.removeItem('CEDI_VEHICLES_DATA');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_DATA_GEOVICTORIA');
@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V6_FIX');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V8_EXCEPT');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_REALTIME_V11_EXACT_DATES');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_REALTIME_V13_DYNAMIC_LATEST_FILE');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
@@ -1212,13 +1213,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetInitialBtn = document.getElementById('resetInitialDataBtn');
   if (resetInitialBtn) {
     resetInitialBtn.addEventListener('click', () => {
-      if (confirm('¿Desea restablecer la base de datos con los 284 vehículos del archivo de encuesta más reciente?')) {
+      if (confirm('¿Desea restablecer la base de datos con los 344 vehículos del archivo de encuesta más reciente?')) {
         vehicles = window.INITIAL_VEHICLES || [];
         saveData();
         renderDatabaseTable();
         renderBadgesList();
         updateDashboardMetrics();
-        alert('Se han cargado los 284 vehículos del archivo de encuesta más reciente exitosamente.');
+        alert('Se han cargado los 344 vehículos del archivo de encuesta más reciente exitosamente.');
       }
     });
   }
@@ -1397,14 +1398,26 @@ document.addEventListener('DOMContentLoaded', () => {
           (window.INITIAL_VEHICLES || vehicles).map(v => (v.cedula || '').toString().replace(/[^0-9]/g, '').replace(/^0+/, ''))
         );
 
-        // Map strictly enforcing 1 UNIQUE record per clean cedula
+        // Map strictly enforcing 1 UNIQUE record per (cedula + tipoVehiculo + placa)
         const dedupedRecordsMap = new Map();
         let exemptCount = 0;
         let activeCount = 0;
         let ignoredCount = 0;
+        let ignoredRoleCount = 0;
         let duplicatesFiltered = 0;
 
         jsonData.forEach((row) => {
+          // 2. Rol Vial Filter (Col. AM)
+          const rolVial = (row['SELECCIONE EL ROL VIAL HABITUAL QUE UTILIZA PARA DESPLAZARSE CASA-TRABAJO-CASA'] || row['ROL VIAL'] || '').toString().trim();
+          const rolLower = rolVial.toLowerCase();
+          const isConductorMoto = rolLower.includes('conductor') && rolLower.includes('motocicleta');
+          const isConductorVehiculo = rolLower.includes('conductor') && (rolLower.includes('veh') || rolLower.includes('carro'));
+
+          if (!isConductorMoto && !isConductorVehiculo) {
+            ignoredRoleCount++;
+            return;
+          }
+
           const rawCedula = (row['CEDULA (SIN PUNTOS)'] || row['Cedula'] || row['CEDULA'] || '').toString();
           const cleanCedula = rawCedula.replace(/[^0-9]/g, '').replace(/^0+/, '');
           if (!cleanCedula) return;
@@ -1412,20 +1425,13 @@ document.addEventListener('DOMContentLoaded', () => {
           const nombre = (row['NOMBRE COMPLETO Y APELLIDOS'] || row['Nombre'] || row['NOMBRE'] || '').toString().trim();
           if (!nombre) return;
 
-          // STRICT DEDUPLICATION: If cedula already exists in map, skip duplicate row!
-          if (dedupedRecordsMap.has(cleanCedula)) {
-            duplicatesFiltered++;
-            return;
-          }
-
           const empresa = (row['EMPRESA'] || row['Empresa'] || 'CEDI').toString().trim();
           const empresaUpper = empresa.toUpperCase();
 
-          // Rule: ABI, HONOR, RENTAS bypass active check
+          // 1. ABI, HONOR, RENTAS bypass active check
           const isExempt = (empresaUpper.includes('ABI') || empresaUpper.includes('HONOR') || empresaUpper.includes('RENTAS'));
 
           if (!isExempt) {
-            // Must exist in active master set
             if (!activeCedulas.has(cleanCedula)) {
               ignoredCount++;
               return;
@@ -1435,52 +1441,77 @@ document.addEventListener('DOMContentLoaded', () => {
             exemptCount++;
           }
 
-          let placa = (row['PLACA'] || row['Placa'] || row['placa'] || row['SELECCIONE EL TIPO DE VEHICULO'] || '').toString().trim().toUpperCase();
-          if (!placa || placa === '0' || placa === 'N/A' || placa === 'NO APLICA' || placa === 'VVV') {
-            placa = `CC-${cleanCedula}`;
+          // 5. Vehicle Type Filter (Col. BK)
+          const tipoVehiculoRaw = (row['TIPO DE VEHICULO'] || row['Tipo'] || '').toString().toUpperCase();
+          let tipoVehiculo = '';
+          if (tipoVehiculoRaw.includes('MOTO')) {
+            tipoVehiculo = 'MOTOCICLETA';
+          } else if (tipoVehiculoRaw.includes('CARRO') || tipoVehiculoRaw.includes('CAMIONETA')) {
+            tipoVehiculo = 'CARRO';
+          } else {
+            if (isConductorMoto) tipoVehiculo = 'MOTOCICLETA';
+            else if (isConductorVehiculo) tipoVehiculo = 'CARRO';
+            else return;
           }
 
-          const tipoVehiculoRaw = (row['TIPO DE VEHICULO'] || row['Tipo'] || 'MOTOCICLETA').toString().toUpperCase();
-          const tipoVehiculo = tipoVehiculoRaw.includes('CARRO') || tipoVehiculoRaw.includes('CAMIONETA') ? 'CARRO' : 'MOTOCICLETA';
+          // 3 & 4. License extraction based on Rol Vial
+          let rawLicCat = '';
+          let rawLicVenc = '';
+
+          if (isConductorMoto) {
+            rawLicCat = row['CATEGORIA DE LICENCIA OPCION 1'] || row['CATEGORIA LICENCIA'] || row['CATEGORIA'] || '';
+            rawLicVenc = row['FECHA VENCIMIENTO OPCION 1'] || row['FECHA VENCIMIENTO LICENCIA'] || '';
+          } else if (isConductorVehiculo) {
+            rawLicCat = row['CATEGORIA DE LICENCIA OPCION 2'] || row['CATEGORIA LICENCIA OPCION 2'] || '';
+            rawLicVenc = row['FECHA VENCIMIENTO LICENCIA OPCION 2'] || row['FECHA VENCIMIENTO OPCION 2'] || '';
+          }
+
+          let placa = (row['PLACA'] || row['Placa'] || row['placa'] || '').toString().trim().toUpperCase();
+          if (!placa || placa === '0' || placa === 'N/A' || placa === 'NO APLICA' || placa === 'VVV') {
+            placa = `CC-${cleanCedula}-${tipoVehiculo}`;
+          }
+
+          // 6 & 7. Deduplication Key: Cedula + TipoVehiculo + Placa (Supports multiple vehicles per collaborator)
+          const dedupKey = `${cleanCedula}_${tipoVehiculo}_${placa}`;
+          if (dedupedRecordsMap.has(dedupKey)) {
+            duplicatesFiltered++;
+            return;
+          }
 
           const rawSoat = row['FECHA VENCIMIENTO SOAT'] || row['SOAT'] || '';
           const rawRtm = row['FECHA VENCIMIENTO RTM'] || row['RTM'] || '';
-          const rawLicCat = row['CATEGORIA DE LICENCIA OPCION 1'] || row['CATEGORIA LICENCIA'] || row['CATEGORIA'] || 'B1';
-          const rawLicVenc = row['FECHA VENCIMIENTO OPCION 1'] || row['FECHA VENCIMIENTO LICENCIA'] || row['VENCIMIENTO LICENCIA'] || '';
-
-          const existingVehicle = vehicles.find(v => (v.cedula || '').toString().replace(/[^0-9]/g, '').replace(/^0+/, '') === cleanCedula);
 
           const updatedSoat = formatDateISO(rawSoat);
           const updatedRtm = formatDateISO(rawRtm);
           const updatedLicCat = rawLicCat ? rawLicCat.toString().toUpperCase() : '';
           const updatedLicVenc = formatDateISO(rawLicVenc);
 
-          dedupedRecordsMap.set(cleanCedula, {
-            id: existingVehicle ? existingVehicle.id : (dedupedRecordsMap.size + 1).toString(),
+          dedupedRecordsMap.set(dedupKey, {
+            id: (dedupedRecordsMap.size + 1).toString(),
             placa,
             nombre,
             cedula: cleanCedula,
             tipoVehiculo,
             empresa,
-            centroDistribucion: row['CENTRO DE DISTRIBUCION'] || row['CD'] || (existingVehicle ? existingVehicle.centroDistribucion : 'CEDI'),
-            cargo: row['POSICIONES'] || row['CARGO'] || (existingVehicle ? existingVehicle.cargo : 'COLABORADOR'),
-            soatVencimiento: (updatedSoat && updatedSoat !== 'N/A') ? updatedSoat : (existingVehicle ? existingVehicle.soatVencimiento : 'N/A'),
-            rtmVencimiento: (updatedRtm && updatedRtm !== 'N/A') ? updatedRtm : (existingVehicle ? existingVehicle.rtmVencimiento : 'N/A'),
-            licenciaCategoria: updatedLicCat || (existingVehicle ? existingVehicle.licenciaCategoria : 'B1'),
-            licenciaVencimiento: (updatedLicVenc && updatedLicVenc !== 'N/A') ? updatedLicVenc : (existingVehicle ? existingVehicle.licenciaVencimiento : 'N/A')
+            centroDistribucion: row['CENTRO DE DISTRIBUCION'] || row['CD'] || 'CEDI',
+            cargo: row['POSICIONES'] || row['CARGO'] || 'COLABORADOR',
+            soatVencimiento: (updatedSoat && updatedSoat !== 'N/A') ? updatedSoat : 'N/A',
+            rtmVencimiento: (updatedRtm && updatedRtm !== 'N/A') ? updatedRtm : 'N/A',
+            licenciaCategoria: updatedLicCat || 'SIN CATEGORÍA',
+            licenciaVencimiento: (updatedLicVenc && updatedLicVenc !== 'N/A') ? updatedLicVenc : 'N/A'
           });
         });
 
         const newRecords = Array.from(dedupedRecordsMap.values());
 
         if (newRecords.length === 0) {
-          alert("⚠️ No se encontraron registros válidos de colaboradores activos ni exentos en el archivo subido. Se conserva la versión anterior.");
+          alert("⚠️ No se encontraron registros válidos de conductores activos ni exentos en el archivo subido. Se conserva la versión anterior.");
           return;
         }
 
         vehicles = newRecords;
         saveData();
-        alert(`✅ ¡Base de datos y fechas de vigencia de SOAT, Tecno y Licencia actualizadas exitosamente!\n\n- Colaboradores procesados: ${newRecords.length}\n- Personal Activo Geovictoria: ${activeCount}\n- Exenciones (ABI/HONOR/RENTAS): ${exemptCount}\n- Duplicados Filtrados: ${duplicatesFiltered}\n- Registros Inactivos Ignorados: ${ignoredCount}`);
+        alert(`✅ ¡Base de datos de vehículos cargada exitosamente!\n\n- Total vehículos procesados: ${newRecords.length}\n- Personal Activo Geovictoria: ${activeCount}\n- Exenciones (ABI/HONOR/RENTAS): ${exemptCount}\n- Roles no conductores ignorados: ${ignoredRoleCount}\n- Duplicados Filtrados: ${duplicatesFiltered}`);
       } catch (err) {
         alert("❌ Error al procesar el archivo Excel: " + err.message + "\nSe conservará la última versión válida de la base de datos.");
       }
