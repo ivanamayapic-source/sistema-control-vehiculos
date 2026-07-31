@@ -4,14 +4,14 @@
 
 INSERT INTO public.vehiculos (
   id, placa, nombre, cedula, tipo_vehiculo, empresa, centro_distribucion, cargo, soat_vencimiento, rtm_vencimiento, licencia_categoria, licencia_vencimiento
-) VALUES  ('1', 'CC-1127944540-MOTOCICLETA', 'Joendri José Cortez morales', '1127944540', 'MOTOCICLETA', 'SEDIAL', 'CEDI', 'AUXILIARES DE ALMACEN', '2025-09-03', '2025-09-03', 'A1', '2025-09-03'),
-  ('2', 'JRK763', 'Mónica Tatiana Salazar Gomez', '43616283', 'CARRO', 'ABI', 'CEDI', 'ADMINISTRATIVOS', '2025-12-01', '2026-12-02', 'C1', '2025-10-10'),
-  ('3', 'PIY57E', 'Luis Alfonso aldana Mendoza', '86044554', 'MOTOCICLETA', 'LIS', 'CEDI', 'LIDERES', '2025-10-16', '2025-09-11', 'B2', '2033-07-28'),
+) VALUES  ('1', 'CC-1127944540-MOTOCICLETA', 'Joendri José Cortez morales', '1127944540', 'MOTOCICLETA', 'SEDIAL', 'CD BUCARAMANGA', 'AUXILIARES DE ALMACEN', '2025-09-03', '2025-09-03', 'A1', '2025-09-03'),
+  ('2', 'JRK763', 'Mónica Tatiana Salazar Gomez', '43616283', 'CARRO', 'ABI', 'CD BUCARAMANGA', 'ADMINISTRATIVOS', '2025-12-01', '2026-12-02', 'C1', '2025-10-10'),
+  ('3', 'PIY57E', 'Luis Alfonso aldana Mendoza', '86044554', 'MOTOCICLETA', 'LIS', 'CD BUCARAMANGA', 'LIDERES', '2025-10-16', '2025-09-11', 'B2', '2033-07-28'),
   ('4', 'UMG88D', 'Luis Camilo Galvis', '1100962022', 'MOTOCICLETA', 'SEDIAL', 'CD SAN GIL', 'OPM', '2027-07-16', '2026-10-30', 'A2', '2032-06-02'),
   ('5', 'GBE22D', 'Daniel Felipe Carreño Hernández', '1100949176', 'MOTOCICLETA', 'LEON LEON', 'CD SAN GIL', 'AUXILIARES DE REPARTO', '2026-02-14', '2026-02-14', 'NO TENGO LICENCIA MOTO', NULL),
-  ('6', 'HTS86D', 'Andrés rojas Muñoz', '1101695350', 'MOTOCICLETA', 'LEON LEON', 'CEDI', 'CONDUCTORES /LIDERES RUTA', '2026-01-21', '2026-01-21', 'A2', '2035-01-17'),
+  ('6', 'HTS86D', 'Andrés rojas Muñoz', '1101695350', 'MOTOCICLETA', 'LEON LEON', 'CD BUCARAMANGA', 'CONDUCTORES /LIDERES RUTA', '2026-01-21', '2026-01-21', 'A2', '2035-01-17'),
   ('7', 'JNN93G', 'Cristian Julián torres López', '91541408', 'MOTOCICLETA', 'LEON LEON', 'CD SAN GIL', 'AUXILIARES DE REPARTO', '2026-11-05', '2026-12-08', 'A1', '2036-11-20'),
-  ('8', 'HDM024', 'Daniel Andres Giraldo Pinto', '1005107540', 'CARRO', 'ABI', 'CEDI', 'ADMINISTRATIVOS', '2025-12-15', '2025-12-15', 'B1', '2033-10-03'),
+  ('8', 'HDM024', 'Daniel Andres Giraldo Pinto', '1005107540', 'CARRO', 'ABI', 'CD BUCARAMANGA', 'ADMINISTRATIVOS', '2025-12-15', '2025-12-15', 'B1', '2033-10-03'),
   ('9', 'FBQ890', 'Victor Enrique Peñuela Ducon', '1100977892', 'CARRO', 'SEDIAL', 'CD SAN GIL', 'OPM', '2026-12-19', '2026-12-19', 'C2', '2028-03-18'),
   ('10', 'VZW37E', 'Andrés Felipe García Martínez', '1100971999', 'MOTOCICLETA', 'SEDIAL', 'CD SAN GIL', 'AUXILIARES DE ALMACEN', '2026-01-03', '2026-01-03', 'A1', '2026-01-03'),
   ('11', 'KGU589', 'Angel Octavio Rincon Correa', '91456467', 'CARRO', 'LEON LEON', 'CD SAN GIL', 'CONDUCTORES /LIDERES RUTA', '2025-12-28', '2025-12-28', 'C2', '2026-03-15'),

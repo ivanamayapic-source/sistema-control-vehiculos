@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V15_ROLE_MAPPED';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V16_CD_COLUMN_X';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of 344 role-mapped vehicles
+    // Clear all obsolete old caches to force fresh load of clean Column X CD dataset
     try {
       localStorage.removeItem('CEDI_VEHICLES_DATA');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_DATA_GEOVICTORIA');
@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V8_EXCEPT');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_REALTIME_V11_EXACT_DATES');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_REALTIME_V13_DYNAMIC_LATEST_FILE');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V15_ROLE_MAPPED');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
