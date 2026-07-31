@@ -1447,19 +1447,26 @@ document.addEventListener('DOMContentLoaded', () => {
           const rawLicCat = row['CATEGORIA DE LICENCIA OPCION 1'] || row['CATEGORIA LICENCIA'] || row['CATEGORIA'] || 'B1';
           const rawLicVenc = row['FECHA VENCIMIENTO OPCION 1'] || row['FECHA VENCIMIENTO LICENCIA'] || row['VENCIMIENTO LICENCIA'] || '';
 
+          const existingVehicle = vehicles.find(v => (v.cedula || '').toString().replace(/[^0-9]/g, '').replace(/^0+/, '') === cleanCedula);
+
+          const updatedSoat = formatDateISO(rawSoat);
+          const updatedRtm = formatDateISO(rawRtm);
+          const updatedLicCat = rawLicCat ? rawLicCat.toString().toUpperCase() : '';
+          const updatedLicVenc = formatDateISO(rawLicVenc);
+
           dedupedRecordsMap.set(cleanCedula, {
-            id: (dedupedRecordsMap.size + 1).toString(),
+            id: existingVehicle ? existingVehicle.id : (dedupedRecordsMap.size + 1).toString(),
             placa,
             nombre,
             cedula: cleanCedula,
             tipoVehiculo,
             empresa,
-            centroDistribucion: row['CENTRO DE DISTRIBUCION'] || row['CD'] || 'CEDI',
-            cargo: row['POSICIONES'] || row['CARGO'] || 'COLABORADOR',
-            soatVencimiento: formatDateISO(rawSoat),
-            rtmVencimiento: formatDateISO(rawRtm),
-            licenciaCategoria: rawLicCat.toString().toUpperCase(),
-            licenciaVencimiento: formatDateISO(rawLicVenc)
+            centroDistribucion: row['CENTRO DE DISTRIBUCION'] || row['CD'] || (existingVehicle ? existingVehicle.centroDistribucion : 'CEDI'),
+            cargo: row['POSICIONES'] || row['CARGO'] || (existingVehicle ? existingVehicle.cargo : 'COLABORADOR'),
+            soatVencimiento: (updatedSoat && updatedSoat !== 'N/A') ? updatedSoat : (existingVehicle ? existingVehicle.soatVencimiento : 'N/A'),
+            rtmVencimiento: (updatedRtm && updatedRtm !== 'N/A') ? updatedRtm : (existingVehicle ? existingVehicle.rtmVencimiento : 'N/A'),
+            licenciaCategoria: updatedLicCat || (existingVehicle ? existingVehicle.licenciaCategoria : 'B1'),
+            licenciaVencimiento: (updatedLicVenc && updatedLicVenc !== 'N/A') ? updatedLicVenc : (existingVehicle ? existingVehicle.licenciaVencimiento : 'N/A')
           });
         });
 
@@ -1472,7 +1479,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         vehicles = newRecords;
         saveData();
-        alert(`✅ ¡Base de datos de Encuesta actualizada sin duplicados!\n\n- Registros únicos procesados: ${newRecords.length}\n- Personal Activo Geovictoria: ${activeCount}\n- Exenciones (ABI/HONOR/RENTAS): ${exemptCount}\n- Duplicados Filtrados: ${duplicatesFiltered}\n- Registros Inactivos Ignorados: ${ignoredCount}`);
+        alert(`✅ ¡Base de datos y fechas de vigencia de SOAT, Tecno y Licencia actualizadas exitosamente!\n\n- Colaboradores procesados: ${newRecords.length}\n- Personal Activo Geovictoria: ${activeCount}\n- Exenciones (ABI/HONOR/RENTAS): ${exemptCount}\n- Duplicados Filtrados: ${duplicatesFiltered}\n- Registros Inactivos Ignorados: ${ignoredCount}`);
       } catch (err) {
         alert("❌ Error al procesar el archivo Excel: " + err.message + "\nSe conservará la última versión válida de la base de datos.");
       }
