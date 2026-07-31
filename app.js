@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V8_EXCEPT';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_REALTIME_V11_EXACT_DATES';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,12 +25,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of 273 active drivers (including ABI, HONOR, RENTAS exception)
+    // Clear all obsolete old caches to force fresh load of exact dates dataset
     try {
       localStorage.removeItem('CEDI_VEHICLES_DATA');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_DATA_GEOVICTORIA');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V4');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V6_FIX');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V8_EXCEPT');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
@@ -40,12 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length >= 200) {
-          vehicles = parsed;
-        } else {
-          vehicles = initialList;
-        }
+        vehicles = JSON.parse(saved);
       } catch (e) {
         console.error('Error parsing stored vehicles, falling back to initial data', e);
         vehicles = initialList;
@@ -147,16 +143,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const str = dateStr.toString().trim();
     if (!str || str === '0' || str === 'N/A' || str.toUpperCase() === 'SIN REGISTRO') return null;
 
-    // Handle Excel serial date numbers like 46240
+    // Handle Excel serial date numbers like 46240 or 48389
     const num = Number(str);
     if (!isNaN(num) && num > 30000 && num < 60000) {
-      const baseDate = new Date(1899, 11, 30);
-      return new Date(baseDate.getTime() + Math.floor(num) * 86400000);
+      const roundedNum = Math.round(num);
+      const baseUTC = Date.UTC(1899, 11, 30);
+      const targetUTC = new Date(baseUTC + roundedNum * 86400000);
+      return new Date(targetUTC.getUTCFullYear(), targetUTC.getUTCMonth(), targetUTC.getUTCDate(), 0, 0, 0, 0);
     }
 
-    // Handle YYYY-MM-DD or ISO date string
-    const d = new Date(str.includes('T') ? str : str + 'T00:00:00');
-    return isNaN(d.getTime()) ? null : d;
+    // Handle YYYY-MM-DD string strictly in local timezone (no UTC offset subtraction)
+    const match = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (match) {
+      const year = parseInt(match[1], 10);
+      const month = parseInt(match[2], 10) - 1;
+      const day = parseInt(match[3], 10);
+      return new Date(year, month, day, 0, 0, 0, 0);
+    }
+
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+    }
+    return null;
   }
 
   function formatDateISO(dateStr) {
