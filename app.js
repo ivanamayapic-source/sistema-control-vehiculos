@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_DATA_GEOVICTORIA';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V4';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,6 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
+    // Clear stale old caches
+    try {
+      localStorage.removeItem('CEDI_VEHICLES_DATA');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_DATA_GEOVICTORIA');
+    } catch (e) {}
+
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
       ? window.INITIAL_VEHICLES 
       : [];
