@@ -1264,7 +1264,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const licVenc = document.getElementById('formLicVenc').value;
 
     if (id) {
-      // Edit existing
+      // Edit existing by ID
       const idx = vehicles.findIndex(x => x.id === id);
       if (idx !== -1) {
         vehicles[idx] = {
@@ -1281,28 +1281,47 @@ document.addEventListener('DOMContentLoaded', () => {
         };
       }
     } else {
-      // Add new
-      const newId = (Date.now()).toString();
-      vehicles.unshift({
-        id: newId,
-        placa,
-        tipoVehiculo: tipo,
-        nombre,
-        cedula,
-        cargo: 'COLABORADOR',
-        empresa,
-        centroDistribucion: 'CEDI',
-        propiedad: 'Propio',
-        licenciaCategoria: licCat,
-        licenciaVencimiento: licVenc,
-        soatVencimiento: soat,
-        rtmVencimiento: rtm
-      });
+      // Check if a vehicle with the exact same cedula already exists (strict deduplication)
+      const cleanCed = cedula.replace(/[^0-9]/g, '').replace(/^0+/, '');
+      const existingCedIdx = vehicles.findIndex(x => x.cedula.replace(/[^0-9]/g, '').replace(/^0+/, '') === cleanCed);
+      
+      if (existingCedIdx !== -1) {
+        // Update existing record instead of creating a duplicate
+        vehicles[existingCedIdx] = {
+          ...vehicles[existingCedIdx],
+          placa,
+          tipoVehiculo: tipo,
+          nombre,
+          empresa,
+          soatVencimiento: soat,
+          rtmVencimiento: rtm,
+          licenciaCategoria: licCat,
+          licenciaVencimiento: licVenc
+        };
+      } else {
+        // Add new
+        const newId = (Date.now()).toString();
+        vehicles.unshift({
+          id: newId,
+          placa,
+          tipoVehiculo: tipo,
+          nombre,
+          cedula,
+          cargo: 'COLABORADOR',
+          empresa,
+          centroDistribucion: 'CEDI',
+          propiedad: 'Propio',
+          licenciaCategoria: licCat,
+          licenciaVencimiento: licVenc,
+          soatVencimiento: soat,
+          rtmVencimiento: rtm
+        });
+      }
     }
 
     saveData();
     editModal.classList.add('hidden');
-    alert("¡Información y renovación guardadas exitosamente!");
+    alert("¡Información guardada exitosamente sin duplicados!");
   });
 
   // --------------------------------------------------------------------------
@@ -1368,19 +1387,26 @@ document.addEventListener('DOMContentLoaded', () => {
           (window.INITIAL_VEHICLES || vehicles).map(v => (v.cedula || '').toString().replace(/[^0-9]/g, '').replace(/^0+/, ''))
         );
 
-        const newRecords = [];
+        // Map strictly enforcing 1 UNIQUE record per clean cedula
+        const dedupedRecordsMap = new Map();
         let exemptCount = 0;
         let activeCount = 0;
         let ignoredCount = 0;
+        let duplicatesFiltered = 0;
 
-        jsonData.forEach((row, idx) => {
-          // Extract fields
+        jsonData.forEach((row) => {
           const rawCedula = (row['CEDULA (SIN PUNTOS)'] || row['Cedula'] || row['CEDULA'] || '').toString();
           const cleanCedula = rawCedula.replace(/[^0-9]/g, '').replace(/^0+/, '');
           if (!cleanCedula) return;
 
           const nombre = (row['NOMBRE COMPLETO Y APELLIDOS'] || row['Nombre'] || row['NOMBRE'] || '').toString().trim();
           if (!nombre) return;
+
+          // STRICT DEDUPLICATION: If cedula already exists in map, skip duplicate row!
+          if (dedupedRecordsMap.has(cleanCedula)) {
+            duplicatesFiltered++;
+            return;
+          }
 
           const empresa = (row['EMPRESA'] || row['Empresa'] || 'CEDI').toString().trim();
           const empresaUpper = empresa.toUpperCase();
@@ -1412,8 +1438,8 @@ document.addEventListener('DOMContentLoaded', () => {
           const rawLicCat = row['CATEGORIA DE LICENCIA OPCION 1'] || row['CATEGORIA LICENCIA'] || row['CATEGORIA'] || 'B1';
           const rawLicVenc = row['FECHA VENCIMIENTO OPCION 1'] || row['FECHA VENCIMIENTO LICENCIA'] || row['VENCIMIENTO LICENCIA'] || '';
 
-          newRecords.push({
-            id: (idx + 1).toString(),
+          dedupedRecordsMap.set(cleanCedula, {
+            id: (dedupedRecordsMap.size + 1).toString(),
             placa,
             nombre,
             cedula: cleanCedula,
@@ -1428,6 +1454,8 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         });
 
+        const newRecords = Array.from(dedupedRecordsMap.values());
+
         if (newRecords.length === 0) {
           alert("⚠️ No se encontraron registros válidos de colaboradores activos ni exentos en el archivo subido. Se conserva la versión anterior.");
           return;
@@ -1435,7 +1463,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         vehicles = newRecords;
         saveData();
-        alert(`✅ ¡Base de datos de Encuesta actualizada exitosamente!\n\n- Registros procesados: ${newRecords.length}\n- Personal Activo Geovictoria: ${activeCount}\n- Exenciones (ABI/HONOR/RENTAS): ${exemptCount}\n- Registros Inactivos Ignorados: ${ignoredCount}`);
+        alert(`✅ ¡Base de datos de Encuesta actualizada sin duplicados!\n\n- Registros únicos procesados: ${newRecords.length}\n- Personal Activo Geovictoria: ${activeCount}\n- Exenciones (ABI/HONOR/RENTAS): ${exemptCount}\n- Duplicados Filtrados: ${duplicatesFiltered}\n- Registros Inactivos Ignorados: ${ignoredCount}`);
       } catch (err) {
         alert("❌ Error al procesar el archivo Excel: " + err.message + "\nSe conservará la última versión válida de la base de datos.");
       }
