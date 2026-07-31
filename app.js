@@ -674,9 +674,12 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="badge-lanyard-hole"></div>
           
           <!-- Header -->
-          <div class="badge-header">
-            <div class="text-[10px] tracking-widest text-slate-900 font-bold opacity-80">CENTRO DE DISTRIBUCIÓN</div>
-            <div class="text-base font-extrabold tracking-tight">CONTROL VEHICULAR</div>
+          <div class="badge-header flex items-center justify-between px-3 py-1.5">
+            <img src="logo.png" alt="ABInBev" class="h-6 w-auto object-contain bg-white/90 p-0.5 rounded shadow-sm">
+            <div class="text-right">
+              <div class="text-[9px] tracking-widest text-slate-900 font-bold opacity-90">CENTRO DE DISTRIBUCIÓN</div>
+              <div class="text-sm font-extrabold tracking-tight">CONTROL VEHICULAR</div>
+            </div>
           </div>
 
           <!-- Body -->
@@ -746,9 +749,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             <!-- Top Row -->
             <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-              <div>
-                <p class="text-[9px] font-extrabold uppercase tracking-widest text-amber-400">CENTRO DE DISTRIBUCIÓN</p>
-                <p class="font-outfit font-extrabold text-sm text-white">IDENTIFICACIÓN VEHICULAR</p>
+              <div class="flex items-center gap-2">
+                <img src="logo.png" alt="ABInBev" class="h-6 w-auto object-contain bg-slate-900 border border-slate-700 p-0.5 rounded">
+                <div>
+                  <p class="text-[9px] font-extrabold uppercase tracking-widest text-amber-400">CENTRO DE DISTRIBUCIÓN</p>
+                  <p class="font-outfit font-extrabold text-sm text-white">IDENTIFICACIÓN VEHICULAR</p>
+                </div>
               </div>
               <div class="bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 rounded text-[10px] font-extrabold text-amber-400">
                 <i class="fa-solid ${iconClass}"></i> ${v.tipoVehiculo}
