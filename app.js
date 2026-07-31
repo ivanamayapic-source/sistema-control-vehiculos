@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V21_FULL_HISTORY';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V22_STRICT_LATEST_COLB';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of full historical vehicle dataset
+    // Clear all obsolete old caches to force fresh load of strict latest Col B dataset
     try {
       localStorage.removeItem('CEDI_VEHICLES_DATA');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_DATA_GEOVICTORIA');
@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V18_TYPO_RESOLVED');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V19_CONSOLIDATED');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V20_RELOADED');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V21_FULL_HISTORY');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
@@ -1474,13 +1475,25 @@ document.addEventListener('DOMContentLoaded', () => {
         let duplicatesFiltered = 0;
 
         rowsByCedulaMap.forEach((list, cleanCedula) => {
-          // Sort from newest to oldest
+          // Sort from newest to oldest by Col B Hora de inicio
           list.sort((a, b) => b.numTime - a.numTime);
+          const latestRow = list[0].row;
 
-          const nombre = getConsolidatedField(list, ['NOMBRE COMPLETO Y APELLIDOS', 'Nombre', 'NOMBRE', 'O'], false, '');
+          // Rol Vial exclusively from latest row
+          const rolVial = (latestRow['SELECCIONE EL ROL VIAL HABITUAL QUE UTILIZA PARA DESPLAZARSE CASA-TRABAJO-CASA'] || latestRow['ROL VIAL'] || latestRow['AM'] || '').toString().trim();
+          const rolLower = rolVial.toLowerCase();
+          const isConductorMoto = rolLower.includes('conductor') && rolLower.includes('motocicleta');
+          const isConductorVehiculo = rolLower.includes('conductor') && (rolLower.includes('veh') || rolLower.includes('carro'));
+
+          if (!isConductorMoto && !isConductorVehiculo) {
+            ignoredRoleCount++;
+            return;
+          }
+
+          const nombre = (latestRow['NOMBRE COMPLETO Y APELLIDOS'] || latestRow['Nombre'] || latestRow['NOMBRE'] || latestRow['O'] || '').toString().trim();
           if (!nombre) return;
 
-          const empresa = getConsolidatedField(list, ['EMPRESA', 'Empresa', 'U'], false, 'CEDI');
+          const empresa = (latestRow['EMPRESA'] || latestRow['Empresa'] || latestRow['U'] || 'CEDI').toString().trim();
           const empresaUpper = empresa.toUpperCase();
 
           // 1. ABI, HONOR, RENTAS bypass active check
@@ -1496,74 +1509,60 @@ document.addEventListener('DOMContentLoaded', () => {
             exemptCount++;
           }
 
-          const rawSoat = getConsolidatedField(list, ['FECHA VENCIMIENTO SOAT', 'SOAT', 'BE'], true, 'N/A');
-          const rawRtm = getConsolidatedField(list, ['FECHA VENCIMIENTO RTM', 'RTM', 'BH'], true, 'N/A');
-          const rawCd = getConsolidatedField(list, ['CENTRO DE DISTRIBUCION', 'CD', 'X'], false, 'CD BUCARAMANGA').toUpperCase();
-          const cdClean = (rawCd && rawCd !== '0' && rawCd !== 'N/A' && rawCd !== 'NO APLICA') ? rawCd : 'CD BUCARAMANGA';
-          const cargo = getConsolidatedField(list, ['POSICIONES', 'CARGO', 'R'], false, 'COLABORADOR');
+          const rawSoat = formatDateISO(latestRow['FECHA VENCIMIENTO SOAT'] || latestRow['SOAT'] || latestRow['BE'] || '');
+          const rawRtm = formatDateISO(latestRow['FECHA VENCIMIENTO RTM'] || latestRow['RTM'] || latestRow['BH'] || '');
+          const rawCd = (latestRow['CENTRO DE DISTRIBUCION'] || latestRow['CD'] || latestRow['X'] || 'CD BUCARAMANGA').toString().toUpperCase().trim();
+          const cdClean = (rawCd && rawCd !== '0' && rawCd !== 'N/A' && rawCd !== 'NO APLICA' && rawCd !== 'CD') ? rawCd : 'CD BUCARAMANGA';
+          const cargo = (latestRow['POSICIONES'] || latestRow['CARGO'] || latestRow['R'] || 'COLABORADOR').toString().trim();
+          const placaBase = (latestRow['PLACA'] || latestRow['Placa'] || latestRow['placa'] || latestRow['BB'] || '').toString().trim().toUpperCase();
 
-          // Scan ALL submissions of this collaborator to find driver roles and vehicles
-          list.forEach((item) => {
-            const row = item.row;
-            const rolVial = (row['SELECCIONE EL ROL VIAL HABITUAL QUE UTILIZA PARA DESPLAZARSE CASA-TRABAJO-CASA'] || row['ROL VIAL'] || row['AM'] || '').toString().trim();
-            const rolLower = rolVial.toLowerCase();
-            const isConductorMoto = rolLower.includes('conductor') && rolLower.includes('motocicleta');
-            const isConductorVehiculo = rolLower.includes('conductor') && (rolLower.includes('veh') || rolLower.includes('carro'));
+          const targetVehicles = [];
 
-            if (!isConductorMoto && !isConductorVehiculo) return;
+          if (isConductorMoto) {
+            const rawLicCatM = (latestRow['CATEGORIA DE LICENCIA OPCION 1'] || latestRow['CATEGORIA LICENCIA'] || latestRow['CATEGORIA'] || latestRow['AP'] || '').toString().trim();
+            const rawLicVencM = formatDateISO(latestRow['FECHA VENCIMIENTO OPCION 1'] || latestRow['FECHA VENCIMIENTO LICENCIA'] || latestRow['AS'] || '');
+            targetVehicles.push({
+              tipoVehiculo: 'MOTOCICLETA',
+              licCat: rawLicCatM ? rawLicCatM.toUpperCase() : 'SIN CATEGORÍA',
+              licVenc: (rawLicVencM && rawLicVencM !== 'N/A') ? rawLicVencM : 'N/A'
+            });
+          }
 
-            const placaRow = (row['PLACA'] || row['Placa'] || row['placa'] || row['BB'] || '').toString().trim().toUpperCase();
+          if (isConductorVehiculo) {
+            const rawLicCatV = (latestRow['CATEGORIA DE LICENCIA OPCION 2'] || latestRow['CATEGORIA LICENCIA OPCION 2'] || latestRow['AV'] || '').toString().trim();
+            const rawLicVencV = formatDateISO(latestRow['FECHA VENCIMIENTO LICENCIA OPCION 2'] || latestRow['FECHA VENCIMIENTO OPCION 2'] || latestRow['AY'] || '');
+            targetVehicles.push({
+              tipoVehiculo: 'CARRO',
+              licCat: rawLicCatV ? rawLicCatV.toUpperCase() : 'SIN CATEGORÍA',
+              licVenc: (rawLicVencV && rawLicVencV !== 'N/A') ? rawLicVencV : 'N/A'
+            });
+          }
 
-            const targetVehicles = [];
-
-            if (isConductorMoto) {
-              const rawLicCatM = getConsolidatedField(list, ['CATEGORIA DE LICENCIA OPCION 1', 'CATEGORIA LICENCIA', 'CATEGORIA', 'AP'], false, '');
-              const rawLicVencM = getConsolidatedField(list, ['FECHA VENCIMIENTO OPCION 1', 'FECHA VENCIMIENTO LICENCIA', 'AS'], true, 'N/A');
-              targetVehicles.push({
-                tipoVehiculo: 'MOTOCICLETA',
-                licCat: rawLicCatM ? rawLicCatM.toUpperCase() : 'SIN CATEGORÍA',
-                licVenc: rawLicVencM,
-                placa: placaRow
-              });
+          targetVehicles.forEach((tv) => {
+            let placa = placaBase;
+            if (!placa || placa === '0' || placa === 'N/A' || placa === 'NO APLICA' || placa === 'VVV') {
+              placa = `CC-${cleanCedula}-${tv.tipoVehiculo}`;
             }
 
-            if (isConductorVehiculo) {
-              const rawLicCatV = getConsolidatedField(list, ['CATEGORIA DE LICENCIA OPCION 2', 'CATEGORIA LICENCIA OPCION 2', 'AV'], false, '');
-              const rawLicVencV = getConsolidatedField(list, ['FECHA VENCIMIENTO LICENCIA OPCION 2', 'FECHA VENCIMIENTO OPCION 2', 'AY'], true, 'N/A');
-              targetVehicles.push({
-                tipoVehiculo: 'CARRO',
-                licCat: rawLicCatV ? rawLicCatV.toUpperCase() : 'SIN CATEGORÍA',
-                licVenc: rawLicVencV,
-                placa: placaRow
-              });
+            const dedupKey = `${cleanCedula}_${tv.tipoVehiculo}_${placa}`;
+            if (dedupedRecordsMap.has(dedupKey)) {
+              duplicatesFiltered++;
+              return;
             }
 
-            targetVehicles.forEach((tv) => {
-              let placa = tv.placa;
-              if (!placa || placa === '0' || placa === 'N/A' || placa === 'NO APLICA' || placa === 'VVV') {
-                placa = `CC-${cleanCedula}-${tv.tipoVehiculo}`;
-              }
-
-              const dedupKey = `${cleanCedula}_${tv.tipoVehiculo}_${placa}`;
-              if (dedupedRecordsMap.has(dedupKey)) {
-                duplicatesFiltered++;
-                return;
-              }
-
-              dedupedRecordsMap.set(dedupKey, {
-                id: (dedupedRecordsMap.size + 1).toString(),
-                placa,
-                nombre,
-                cedula: cleanCedula,
-                tipoVehiculo: tv.tipoVehiculo,
-                empresa,
-                centroDistribucion: cdClean,
-                cargo,
-                soatVencimiento: rawSoat,
-                rtmVencimiento: rawRtm,
-                licenciaCategoria: tv.licCat,
-                licenciaVencimiento: tv.licVenc
-              });
+            dedupedRecordsMap.set(dedupKey, {
+              id: (dedupedRecordsMap.size + 1).toString(),
+              placa,
+              nombre,
+              cedula: cleanCedula,
+              tipoVehiculo: tv.tipoVehiculo,
+              empresa,
+              centroDistribucion: cdClean,
+              cargo,
+              soatVencimiento: (rawSoat && rawSoat !== 'N/A') ? rawSoat : 'N/A',
+              rtmVencimiento: (rawRtm && rawRtm !== 'N/A') ? rawRtm : 'N/A',
+              licenciaCategoria: tv.licCat,
+              licenciaVencimiento: tv.licVenc
             });
           });
         });
