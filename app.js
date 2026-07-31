@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V25_DYNAMIC_PERMANENT_RULES';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V26_FULL_DISCOVERY_348';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of permanent rules engine
+    // Clear all obsolete old caches to force fresh load of full vehicle discovery dataset
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       localStorage.removeItem('CEDI_VEHICLES_DATA');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V24_SYNC_LATEST_COLX');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V25_DYNAMIC_PERMANENT_RULES');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
