@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V23_FIELD_CONSOLIDATED';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V24_SYNC_LATEST_COLX';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,45 +25,24 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of field-consolidated dataset
+    // Clear all obsolete old caches to force fresh load of verified Column X dataset
     try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('CEDI_ACTIVE_VEHICLES') && key !== STORAGE_KEY) {
+          localStorage.removeItem(key);
+        }
+      }
       localStorage.removeItem('CEDI_VEHICLES_DATA');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_DATA_GEOVICTORIA');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V4');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V6_FIX');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V8_EXCEPT');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_REALTIME_V11_EXACT_DATES');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_REALTIME_V13_DYNAMIC_LATEST_FILE');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V15_ROLE_MAPPED');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V16_CD_COLUMN_X');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V17_LATEST_COL_B');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V18_TYPO_RESOLVED');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V19_CONSOLIDATED');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V20_RELOADED');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V21_FULL_HISTORY');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V22_STRICT_LATEST_COLB');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V23_FIELD_CONSOLIDATED');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
       ? window.INITIAL_VEHICLES 
       : [];
 
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        vehicles = JSON.parse(saved);
-      } catch (e) {
-        console.error('Error parsing stored vehicles, falling back to initial data', e);
-        vehicles = initialList;
-      }
-    } else {
-      vehicles = initialList;
-    }
-
-    if (!Array.isArray(vehicles) || vehicles.length === 0) {
-      vehicles = initialList;
-    }
-
+    // Always prefer fresh window.INITIAL_VEHICLES on load to guarantee exact Excel data sync
+    vehicles = initialList;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(vehicles));
 
     if (supabaseClient) {
