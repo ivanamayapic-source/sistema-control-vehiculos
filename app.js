@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V6_FIX';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V8_EXCEPT';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,11 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of 255 active drivers
+    // Clear all obsolete old caches to force fresh load of 273 active drivers (including ABI, HONOR, RENTAS exception)
     try {
       localStorage.removeItem('CEDI_VEHICLES_DATA');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_DATA_GEOVICTORIA');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V4');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V6_FIX');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
@@ -1201,13 +1202,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetInitialBtn = document.getElementById('resetInitialDataBtn');
   if (resetInitialBtn) {
     resetInitialBtn.addEventListener('click', () => {
-      if (confirm('¿Desea restablecer la base de datos con los 255 vehículos conductores de personal activo (Geovictoria)?')) {
+      if (confirm('¿Desea restablecer la base de datos con los 273 vehículos conductores (Personal Activo Geovictoria + Excepción ABI/HONOR/RENTAS)?')) {
         vehicles = window.INITIAL_VEHICLES || [];
         saveData();
         renderDatabaseTable();
         renderBadgesList();
         updateDashboardMetrics();
-        alert('Se han cargado los 255 vehículos conductores activos de Geovictoria exitosamente.');
+        alert('Se han cargado los 273 vehículos de personal activo y empresas exentas (ABI/HONOR/RENTAS) exitosamente.');
       }
     });
   }
