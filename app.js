@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V19_CONSOLIDATED';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V20_RELOADED';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of consolidated dataset
+    // Clear all obsolete old caches to force fresh load of reloaded consolidated dataset
     try {
       localStorage.removeItem('CEDI_VEHICLES_DATA');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_DATA_GEOVICTORIA');
@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V16_CD_COLUMN_X');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V17_LATEST_COL_B');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V18_TYPO_RESOLVED');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V19_CONSOLIDATED');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
