@@ -674,11 +674,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="badge-lanyard-hole"></div>
           
           <!-- Header -->
-          <div class="badge-header flex items-center justify-between px-3 py-1.5">
-            <img src="logo.png" alt="ABInBev" class="h-6 w-auto object-contain bg-white/90 p-0.5 rounded shadow-sm">
+          <div class="badge-header flex items-center justify-between px-3 py-2">
+            <div class="bg-slate-950 p-1.5 rounded-xl border border-slate-700/80 shadow-md flex items-center justify-center">
+              <img src="logo.png" alt="Logística Conectamos MAZ" class="h-10 max-w-[130px] object-contain">
+            </div>
             <div class="text-right">
-              <div class="text-[9px] tracking-widest text-slate-900 font-bold opacity-90">CENTRO DE DISTRIBUCIÓN</div>
-              <div class="text-sm font-extrabold tracking-tight">CONTROL VEHICULAR</div>
+              <div class="text-[9px] tracking-widest text-slate-900 font-extrabold uppercase">CENTRO DE DISTRIBUCIÓN</div>
+              <div class="text-xs font-black tracking-tight text-slate-950">CONTROL VEHICULAR</div>
             </div>
           </div>
 
@@ -749,11 +751,13 @@ document.addEventListener('DOMContentLoaded', () => {
             
             <!-- Top Row -->
             <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-              <div class="flex items-center gap-2">
-                <img src="logo.png" alt="ABInBev" class="h-6 w-auto object-contain bg-slate-900 border border-slate-700 p-0.5 rounded">
+              <div class="flex items-center gap-3">
+                <div class="bg-slate-950 p-1.5 rounded-xl border border-slate-700/80 shadow-md flex items-center justify-center">
+                  <img src="logo.png" alt="Logística Conectamos MAZ" class="h-9 max-w-[130px] object-contain">
+                </div>
                 <div>
                   <p class="text-[9px] font-extrabold uppercase tracking-widest text-amber-400">CENTRO DE DISTRIBUCIÓN</p>
-                  <p class="font-outfit font-extrabold text-sm text-white">IDENTIFICACIÓN VEHICULAR</p>
+                  <p class="font-outfit font-extrabold text-xs sm:text-sm text-white">IDENTIFICACIÓN VEHICULAR</p>
                 </div>
               </div>
               <div class="bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 rounded text-[10px] font-extrabold text-amber-400">
