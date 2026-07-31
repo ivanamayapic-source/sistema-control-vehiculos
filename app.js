@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_REALTIME_V11_EXACT_DATES';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_REALTIME_V13_DYNAMIC_LATEST_FILE';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,13 +25,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of exact dates dataset
+    // Clear all obsolete old caches to force fresh load of latest dynamic dataset (284 vehicles)
     try {
       localStorage.removeItem('CEDI_VEHICLES_DATA');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_DATA_GEOVICTORIA');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V4');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V6_FIX');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_GEOVICTORIA_REALTIME_V8_EXCEPT');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_REALTIME_V11_EXACT_DATES');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
@@ -1211,13 +1212,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetInitialBtn = document.getElementById('resetInitialDataBtn');
   if (resetInitialBtn) {
     resetInitialBtn.addEventListener('click', () => {
-      if (confirm('¿Desea restablecer la base de datos con los 273 vehículos conductores (Personal Activo Geovictoria + Excepción ABI/HONOR/RENTAS)?')) {
+      if (confirm('¿Desea restablecer la base de datos con los 284 vehículos del archivo de encuesta más reciente?')) {
         vehicles = window.INITIAL_VEHICLES || [];
         saveData();
         renderDatabaseTable();
         renderBadgesList();
         updateDashboardMetrics();
-        alert('Se han cargado los 273 vehículos de personal activo y empresas exentas (ABI/HONOR/RENTAS) exitosamente.');
+        alert('Se han cargado los 284 vehículos del archivo de encuesta más reciente exitosamente.');
       }
     });
   }

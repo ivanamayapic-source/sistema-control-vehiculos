@@ -36,19 +36,19 @@
     {
         "id":  "3",
         "placa":  "PIY57E",
-        "nombre":  "Luis Alfonso Aldana Mendoza",
+        "nombre":  "Luis Alfonso aldana Mendoza",
         "cedula":  "86044554",
         "cargo":  "LIDERES",
         "empresa":  "LIS",
-        "centroDistribucion":  "CD FORJANDES",
+        "centroDistribucion":  "CEDI",
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
-        "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2033-07-29",
-        "soatVencimiento":  "2026-10-16",
-        "rtmVencimiento":  "2026-09-11",
+        "licenciaCategoria":  "B2",
+        "licenciaVencimiento":  "2033-07-28",
+        "soatVencimiento":  "2025-10-16",
+        "rtmVencimiento":  "2025-09-11",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46036.250567129602"
+        "horaInicio":  "45903.643842592595"
     },
     {
         "id":  "4",
@@ -61,45 +61,45 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2032-05-04",
-        "soatVencimiento":  "2027-06-16",
+        "licenciaVencimiento":  "2032-06-02",
+        "soatVencimiento":  "2027-07-16",
         "rtmVencimiento":  "2026-10-30",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46205.666516203702"
+        "horaInicio":  "46220.324155092603"
     },
     {
         "id":  "5",
-        "placa":  "GBE22D",
-        "nombre":  "Daniel Felipe Carreño Hernández",
+        "placa":  "VIU27E",
+        "nombre":  "Daniel Carreño",
         "cedula":  "1100949176",
         "cargo":  "AUXILIARES DE REPARTO",
         "empresa":  "LEON LEON",
         "centroDistribucion":  "CD SAN GIL",
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
-        "licenciaCategoria":  "NO TENGO LICENCIA MOTO",
-        "licenciaVencimiento":  "",
-        "soatVencimiento":  "2026-02-14",
-        "rtmVencimiento":  "2026-02-14",
+        "licenciaCategoria":  "A2",
+        "licenciaVencimiento":  "2030-05-30",
+        "soatVencimiento":  "2027-04-10",
+        "rtmVencimiento":  "2027-04-10",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46067.815393518496"
+        "horaInicio":  "46220.320613425902"
     },
     {
         "id":  "6",
         "placa":  "ZTW71F",
-        "nombre":  "Andrés rojas Muñoz",
+        "nombre":  "Andrés mauricio rojas Muñoz",
         "cedula":  "1101695350",
         "cargo":  "CONDUCTORES /LIDERES RUTA",
         "empresa":  "LEON LEON",
         "centroDistribucion":  "CD SAN GIL",
         "propiedad":  "De un Tercero",
         "tipoVehiculo":  "MOTOCICLETA",
-        "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "",
-        "soatVencimiento":  "2026-10-25",
-        "rtmVencimiento":  "2026-10-25",
+        "licenciaCategoria":  "A1",
+        "licenciaVencimiento":  "1996-10-10",
+        "soatVencimiento":  "2026-10-10",
+        "rtmVencimiento":  "2026-10-10",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46141.718402777798"
+        "horaInicio":  "46220.421805555598"
     },
     {
         "id":  "7",
@@ -108,15 +108,15 @@
         "cedula":  "91541408",
         "cargo":  "AUXILIARES DE REPARTO",
         "empresa":  "LEON LEON",
-        "centroDistribucion":  "CEDI",
+        "centroDistribucion":  "CD SAN GIL",
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
-        "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2033-06-09",
-        "soatVencimiento":  "2025-09-30",
-        "rtmVencimiento":  "2025-09-30",
+        "licenciaCategoria":  "A1",
+        "licenciaVencimiento":  "2036-11-20",
+        "soatVencimiento":  "2026-11-05",
+        "rtmVencimiento":  "2026-12-08",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "45903.659490740742"
+        "horaInicio":  "46219.739907407398"
     },
     {
         "id":  "8",
@@ -138,7 +138,7 @@
     {
         "id":  "9",
         "placa":  "FBQ890",
-        "nombre":  "Victor Peñuela",
+        "nombre":  "Victor Enrique Peñuela Ducon",
         "cedula":  "1100977892",
         "cargo":  "OPM",
         "empresa":  "SEDIAL",
@@ -150,11 +150,11 @@
         "soatVencimiento":  "2026-12-19",
         "rtmVencimiento":  "2026-12-19",
         "rolVial":  "Conductor Vehículo",
-        "horaInicio":  "46206.464849536998"
+        "horaInicio":  "46220.281041666698"
     },
     {
         "id":  "10",
-        "placa":  "BZW37B",
+        "placa":  "BZW37E",
         "nombre":  "Andrés Felipe García Martínez",
         "cedula":  "1100971999",
         "cargo":  "AUXILIARES DE ALMACEN",
@@ -163,28 +163,28 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A1",
-        "licenciaVencimiento":  "2027-01-05",
-        "soatVencimiento":  "2027-01-06",
-        "rtmVencimiento":  "2027-01-07",
+        "licenciaVencimiento":  "2027-01-03",
+        "soatVencimiento":  "2027-01-03",
+        "rtmVencimiento":  "2027-01-03",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46206.519143518497"
+        "horaInicio":  "46220.318159722199"
     },
     {
         "id":  "11",
         "placa":  "KGU598",
-        "nombre":  "Angel Rincon",
+        "nombre":  "Angel Octavio Rincon Correa",
         "cedula":  "91456467",
         "cargo":  "CONDUCTORES /LIDERES RUTA",
         "empresa":  "LEON LEON",
         "centroDistribucion":  "CD SAN GIL",
         "propiedad":  "Propio",
         "tipoVehiculo":  "CARRO",
-        "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2029-03-12",
+        "licenciaCategoria":  "NO TENGO LICENCIA MOTO",
+        "licenciaVencimiento":  "",
         "soatVencimiento":  "2026-12-29",
         "rtmVencimiento":  "2026-12-29",
         "rolVial":  "Conductor Vehículo",
-        "horaInicio":  "46146.264166666697"
+        "horaInicio":  "46220.361516203702"
     },
     {
         "id":  "12",
@@ -265,11 +265,11 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "CARRO",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2026-05-04",
-        "soatVencimiento":  "2026-12-30",
-        "rtmVencimiento":  "2026-12-30",
+        "licenciaVencimiento":  "2031-06-06",
+        "soatVencimiento":  "2027-01-29",
+        "rtmVencimiento":  "2027-01-27",
         "rolVial":  "Conductor Vehículo",
-        "horaInicio":  "46146.261122685202"
+        "horaInicio":  "46233.666168981501"
     },
     {
         "id":  "17",
@@ -384,11 +384,11 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "",
-        "soatVencimiento":  "2027-01-06",
-        "rtmVencimiento":  "2027-01-06",
+        "licenciaVencimiento":  "2035-07-30",
+        "soatVencimiento":  "2026-07-01",
+        "rtmVencimiento":  "2027-01-07",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46146.263530092598"
+        "horaInicio":  "46233.791863425897"
     },
     {
         "id":  "24",
@@ -400,12 +400,12 @@
         "centroDistribucion":  "CD SAN GIL",
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
-        "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2026-09-20",
-        "soatVencimiento":  "2026-03-07",
-        "rtmVencimiento":  "2026-03-07",
+        "licenciaCategoria":  "A1",
+        "licenciaVencimiento":  "2026-08-22",
+        "soatVencimiento":  "2026-07-25",
+        "rtmVencimiento":  "2026-07-25",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46069.504664351902"
+        "horaInicio":  "46219.744803240697"
     },
     {
         "id":  "25",
@@ -434,19 +434,19 @@
         "centroDistribucion":  "CD BUCARAMANGA",
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
-        "licenciaCategoria":  "A1",
-        "licenciaVencimiento":  "2026-05-11",
-        "soatVencimiento":  "2026-11-22",
-        "rtmVencimiento":  "2026-11-20",
+        "licenciaCategoria":  "A2",
+        "licenciaVencimiento":  "2034-09-07",
+        "soatVencimiento":  "2026-11-30",
+        "rtmVencimiento":  "2026-09-22",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46153.676967592597"
+        "horaInicio":  "46218.545023148203"
     },
     {
         "id":  "27",
         "placa":  "DJZ26H",
-        "nombre":  "Diego Hernándo Díaz leon",
+        "nombre":  "Diego Diaz leon",
         "cedula":  "1005460007",
-        "cargo":  "AUXILIARES DE REPARTO",
+        "cargo":  "CONTRATISTAS",
         "empresa":  "TEV",
         "centroDistribucion":  "CD BUCARAMANGA",
         "propiedad":  "Propio",
@@ -454,9 +454,9 @@
         "licenciaCategoria":  "A2",
         "licenciaVencimiento":  "2031-04-15",
         "soatVencimiento":  "2026-08-08",
-        "rtmVencimiento":  "2026-07-05",
+        "rtmVencimiento":  "2026-07-30",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46035.786168981504"
+        "horaInicio":  "46227.601134259297"
     },
     {
         "id":  "28",
@@ -511,7 +511,7 @@
     },
     {
         "id":  "31",
-        "placa":  "MRG99A",
+        "placa":  "DVK65I",
         "nombre":  "Wilmer Andrés cubides Codezo",
         "cedula":  "1098787452",
         "cargo":  "AUXILIARES DE REPARTO",
@@ -520,15 +520,15 @@
         "propiedad":  "De un Tercero",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A1",
-        "licenciaVencimiento":  "2026-05-03",
-        "soatVencimiento":  "2026-05-31",
-        "rtmVencimiento":  "2026-05-03",
+        "licenciaVencimiento":  "2027-04-04",
+        "soatVencimiento":  "2027-04-04",
+        "rtmVencimiento":  "2028-04-04",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46045.477905092601"
+        "horaInicio":  "46218.642766203702"
     },
     {
         "id":  "32",
-        "placa":  "EXR 69D",
+        "placa":  "EXR69D",
         "nombre":  "José Edimer García Hernández",
         "cedula":  "7168464",
         "cargo":  "CONDUCTORES /LIDERES RUTA",
@@ -537,15 +537,15 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2029-01-26",
-        "soatVencimiento":  "2026-08-29",
-        "rtmVencimiento":  "2026-08-29",
+        "licenciaVencimiento":  "2029-01-21",
+        "soatVencimiento":  "2026-08-28",
+        "rtmVencimiento":  "2026-08-28",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46153.562418981499"
+        "horaInicio":  "46218.487511574102"
     },
     {
         "id":  "33",
-        "placa":  "EBY 15I",
+        "placa":  "RBY 15I",
         "nombre":  "Raul manuel silva perez",
         "cedula":  "1099370605",
         "cargo":  "AUXILIARES DE REPARTO",
@@ -553,12 +553,12 @@
         "centroDistribucion":  "CD BUCARAMANGA",
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
-        "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2028-07-19",
-        "soatVencimiento":  "2027-03-18",
-        "rtmVencimiento":  "2028-03-18",
+        "licenciaCategoria":  "A1",
+        "licenciaVencimiento":  "2030-02-14",
+        "soatVencimiento":  "2027-03-07",
+        "rtmVencimiento":  "2028-03-16",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46153.607175925899"
+        "horaInicio":  "46218.441678240699"
     },
     {
         "id":  "34",
@@ -604,12 +604,12 @@
         "centroDistribucion":  "CD SAN GIL",
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
-        "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2032-03-03",
-        "soatVencimiento":  "2026-04-12",
+        "licenciaCategoria":  "A1",
+        "licenciaVencimiento":  "2025-11-26",
+        "soatVencimiento":  "2026-04-21",
         "rtmVencimiento":  "",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "45905.7897800926"
+        "horaInicio":  "46220.435324074097"
     },
     {
         "id":  "37",
@@ -639,11 +639,11 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2033-08-30",
-        "soatVencimiento":  "2026-10-04",
-        "rtmVencimiento":  "2026-10-04",
+        "licenciaVencimiento":  "2033-10-30",
+        "soatVencimiento":  "2026-10-03",
+        "rtmVencimiento":  "2026-10-02",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46141.769687499997"
+        "horaInicio":  "46233.473958333299"
     },
     {
         "id":  "39",
@@ -718,22 +718,22 @@
         "placa":  "RPR10F",
         "nombre":  "Jhon Edward Rubio Ardila",
         "cedula":  "1100968302",
-        "cargo":  "ADMINISTRATIVOS",
-        "empresa":  "LEON LEON",
-        "centroDistribucion":  "CD SAN GIL",
+        "cargo":  "LIDERES",
+        "empresa":  "ABI",
+        "centroDistribucion":  "CD BUCARAMANGA",
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2035-04-10",
-        "soatVencimiento":  "2026-05-05",
-        "rtmVencimiento":  "2026-05-05",
+        "licenciaVencimiento":  "2035-03-10",
+        "soatVencimiento":  "2027-04-27",
+        "rtmVencimiento":  "2027-03-12",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "45909.692395833299"
+        "horaInicio":  "46231.489571759303"
     },
     {
         "id":  "44",
-        "placa":  "PXO 35H",
-        "nombre":  "Brayan",
+        "placa":  "PXO35H",
+        "nombre":  "Brayan Barrera",
         "cedula":  "1005197276",
         "cargo":  "CONDUCTORES /LIDERES RUTA",
         "empresa":  "LEON LEON",
@@ -741,11 +741,11 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2026-05-22",
-        "soatVencimiento":  "2026-05-21",
-        "rtmVencimiento":  "2026-05-22",
+        "licenciaVencimiento":  "2029-10-19",
+        "soatVencimiento":  "2027-06-10",
+        "rtmVencimiento":  "",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46146.262303240699"
+        "horaInicio":  "46219.739201388897"
     },
     {
         "id":  "45",
@@ -793,27 +793,27 @@
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "NO TENGO LICENCIA MOTO",
         "licenciaVencimiento":  "",
-        "soatVencimiento":  "2025-09-09",
-        "rtmVencimiento":  "",
+        "soatVencimiento":  "2025-09-08",
+        "rtmVencimiento":  "2026-02-10",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "45909.731458333299"
+        "horaInicio":  "46219.825601851902"
     },
     {
         "id":  "48",
         "placa":  "BUS763",
-        "nombre":  "José Luis Ballesteros",
+        "nombre":  "José Luis Ballesteros torres",
         "cedula":  "1095919716",
-        "cargo":  "CONDUCTORES /LIDERES RUTA",
+        "cargo":  "RESPONSABLES REPARTO",
         "empresa":  "LEON LEON",
         "centroDistribucion":  "CD SAN GIL",
         "propiedad":  "Propio",
         "tipoVehiculo":  "CARRO",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2026-01-23",
-        "soatVencimiento":  "2027-01-06",
-        "rtmVencimiento":  "2027-01-05",
+        "licenciaVencimiento":  "2026-07-31",
+        "soatVencimiento":  "2027-01-13",
+        "rtmVencimiento":  "2027-01-13",
         "rolVial":  "Conductor Vehículo",
-        "horaInicio":  "46045.279340277797"
+        "horaInicio":  "46219.743796296301"
     },
     {
         "id":  "49",
@@ -834,20 +834,20 @@
     },
     {
         "id":  "50",
-        "placa":  "MOR359",
+        "placa":  "SLB01E",
         "nombre":  "William Enciso pereira",
         "cedula":  "13638171",
         "cargo":  "CONDUCTORES /LIDERES RUTA",
         "empresa":  "LEON LEON",
         "centroDistribucion":  "CD SAN GIL",
         "propiedad":  "Propio",
-        "tipoVehiculo":  "CARRO",
-        "licenciaCategoria":  "A2",
+        "tipoVehiculo":  "MOTOCICLETA",
+        "licenciaCategoria":  "A1",
         "licenciaVencimiento":  "2034-07-04",
-        "soatVencimiento":  "2026-12-29",
-        "rtmVencimiento":  "2026-07-29",
-        "rolVial":  "Conductor Vehículo",
-        "horaInicio":  "46035.834560185198"
+        "soatVencimiento":  "2026-08-14",
+        "rtmVencimiento":  "2026-08-14",
+        "rolVial":  "Conductor Motocicleta",
+        "horaInicio":  "46233.534641203703"
     },
     {
         "id":  "51",
@@ -859,12 +859,12 @@
         "centroDistribucion":  "CD SAN GIL",
         "propiedad":  "Propio",
         "tipoVehiculo":  "CARRO",
-        "licenciaCategoria":  "A1",
-        "licenciaVencimiento":  "",
-        "soatVencimiento":  "2026-06-08",
-        "rtmVencimiento":  "2026-05-18",
+        "licenciaCategoria":  "A2",
+        "licenciaVencimiento":  "2030-07-17",
+        "soatVencimiento":  "2026-07-10",
+        "rtmVencimiento":  "2026-07-17",
         "rolVial":  "Conductor Vehículo",
-        "horaInicio":  "46146.262141203697"
+        "horaInicio":  "46220.354143518503"
     },
     {
         "id":  "52",
@@ -886,19 +886,19 @@
     {
         "id":  "53",
         "placa":  "HIU59C",
-        "nombre":  "Cristian Camilo Rodríguez Luque",
+        "nombre":  "Cristian Camilo Rodríguez luque",
         "cedula":  "1015996572",
         "cargo":  "AUXILIARES DE REPARTO",
         "empresa":  "LEON LEON",
         "centroDistribucion":  "CD SAN GIL",
-        "propiedad":  "Propio",
+        "propiedad":  "De un Tercero",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "NO TENGO LICENCIA MOTO",
         "licenciaVencimiento":  "",
-        "soatVencimiento":  "2026-02-17",
-        "rtmVencimiento":  "2026-02-12",
+        "soatVencimiento":  "2026-07-16",
+        "rtmVencimiento":  "2026-07-16",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46069.508391203701"
+        "horaInicio":  "46219.740833333301"
     },
     {
         "id":  "54",
@@ -954,24 +954,24 @@
     {
         "id":  "57",
         "placa":  "JOM12D",
-        "nombre":  "IVAN ALEXIS LOMBANA TORRES",
+        "nombre":  "Iván Alexis Lombana Torres",
         "cedula":  "1049635283",
         "cargo":  "ADMINISTRATIVOS",
         "empresa":  "LEON LEON",
         "centroDistribucion":  "CD SAN GIL",
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
-        "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2034-06-16",
-        "soatVencimiento":  "2025-10-11",
-        "rtmVencimiento":  "2025-10-11",
+        "licenciaCategoria":  "NO TENGO LICENCIA MOTO",
+        "licenciaVencimiento":  "",
+        "soatVencimiento":  "2026-10-20",
+        "rtmVencimiento":  "2026-10-20",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "45911.747118055602"
+        "horaInicio":  "46233.567465277803"
     },
     {
         "id":  "58",
         "placa":  "KAO32F",
-        "nombre":  "Jesús David Calderón",
+        "nombre":  "Jesús David Calderón Angarita",
         "cedula":  "1101689989",
         "cargo":  "CONDUCTORES /LIDERES RUTA",
         "empresa":  "LEON LEON",
@@ -980,10 +980,10 @@
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "NO TENGO LICENCIA MOTO",
         "licenciaVencimiento":  "",
-        "soatVencimiento":  "2026-03-11",
-        "rtmVencimiento":  "2026-03-11",
+        "soatVencimiento":  "2027-03-24",
+        "rtmVencimiento":  "2027-03-27",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46045.445243055598"
+        "horaInicio":  "46219.765879629602"
     },
     {
         "id":  "59",
@@ -1464,7 +1464,7 @@
     {
         "id":  "87",
         "placa":  "EBU45G",
-        "nombre":  "José Ángel Bernal López",
+        "nombre":  "JOSE ÁNGEL BERNAL LÓPEZ",
         "cedula":  "1232892292",
         "cargo":  "ADMINISTRATIVOS",
         "empresa":  "TEV",
@@ -1472,11 +1472,11 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2033-09-15",
-        "soatVencimiento":  "2025-12-31",
-        "rtmVencimiento":  "2025-12-31",
+        "licenciaVencimiento":  "2033-08-15",
+        "soatVencimiento":  "2027-01-31",
+        "rtmVencimiento":  "2027-01-31",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "45960.863078703696"
+        "horaInicio":  "46227.714814814797"
     },
     {
         "id":  "88",
@@ -1498,7 +1498,7 @@
     {
         "id":  "89",
         "placa":  "ZQD23H",
-        "nombre":  "Carlos Martínez Escandón",
+        "nombre":  "Carlos José Martínez Escandón",
         "cedula":  "1082490354",
         "cargo":  "AUXILIARES DE REPARTO",
         "empresa":  "TEV",
@@ -1507,10 +1507,10 @@
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "NO TENGO LICENCIA MOTO",
         "licenciaVencimiento":  "",
-        "soatVencimiento":  "2027-03-19",
-        "rtmVencimiento":  "2028-03-19",
+        "soatVencimiento":  "2027-02-18",
+        "rtmVencimiento":  "2028-02-18",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46153.780057870397"
+        "horaInicio":  "46218.537916666697"
     },
     {
         "id":  "90",
@@ -1735,7 +1735,7 @@
     },
     {
         "id":  "103",
-        "placa":  "NIY 74E",
+        "placa":  "JZW69G",
         "nombre":  "Jhon William Sotomonte cepeda",
         "cedula":  "1101546601",
         "cargo":  "AUXILIARES DE REPARTO",
@@ -1744,11 +1744,11 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A1",
-        "licenciaVencimiento":  "2035-08-07",
-        "soatVencimiento":  "2027-12-22",
-        "rtmVencimiento":  "2026-04-17",
+        "licenciaVencimiento":  "2035-07-11",
+        "soatVencimiento":  "2026-12-17",
+        "rtmVencimiento":  "2026-12-17",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46045.472708333298"
+        "horaInicio":  "46218.434733796297"
     },
     {
         "id":  "104",
@@ -1872,7 +1872,7 @@
     {
         "id":  "111",
         "placa":  "BZC38H",
-        "nombre":  "Rony cespedes prentt",
+        "nombre":  "Rony cespedes",
         "cedula":  "1095812377",
         "cargo":  "AUXILIARES DE REPARTO",
         "empresa":  "LEON LEON",
@@ -1880,11 +1880,11 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2034-08-19",
-        "soatVencimiento":  "2026-06-17",
-        "rtmVencimiento":  "2026-06-17",
+        "licenciaVencimiento":  "2034-08-25",
+        "soatVencimiento":  "2027-07-24",
+        "rtmVencimiento":  "2027-06-18",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46035.577141203699"
+        "horaInicio":  "46219.793287036999"
     },
     {
         "id":  "112",
@@ -2007,8 +2007,8 @@
     },
     {
         "id":  "119",
-        "placa":  "ZOO 44H",
-        "nombre":  "Carlos Mario Roa Jaimes",
+        "placa":  "ZOO-44H",
+        "nombre":  "Carlos Mario Roa",
         "cedula":  "1083046207",
         "cargo":  "AUXILIARES DE REPARTO",
         "empresa":  "TEV",
@@ -2018,9 +2018,9 @@
         "licenciaCategoria":  "A2",
         "licenciaVencimiento":  "2035-10-14",
         "soatVencimiento":  "2026-12-19",
-        "rtmVencimiento":  "2027-12-26",
+        "rtmVencimiento":  "2027-12-19",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46035.784212963001"
+        "horaInicio":  "46218.471562500003"
     },
     {
         "id":  "120",
@@ -2144,7 +2144,7 @@
     {
         "id":  "127",
         "placa":  "HUR42D",
-        "nombre":  "Miguel angel Alonso verdugo",
+        "nombre":  "Miguel Angel Alonso Verdugo",
         "cedula":  "1005149237",
         "cargo":  "AUXILIARES DE ALMACEN",
         "empresa":  "SEDIAL",
@@ -2152,11 +2152,11 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2030-09-19",
-        "soatVencimiento":  "2027-05-04",
-        "rtmVencimiento":  "2027-04-06",
+        "licenciaVencimiento":  "2030-09-18",
+        "soatVencimiento":  "2027-04-07",
+        "rtmVencimiento":  "2027-05-05",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46154.425972222198"
+        "horaInicio":  "46220.360821759299"
     },
     {
         "id":  "128",
@@ -2169,28 +2169,28 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2027-03-26",
-        "soatVencimiento":  "2027-01-14",
-        "rtmVencimiento":  "2026-08-13",
+        "licenciaVencimiento":  "2027-03-23",
+        "soatVencimiento":  "2027-05-13",
+        "rtmVencimiento":  "2026-12-18",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46141.749374999999"
+        "horaInicio":  "46219.738784722198"
     },
     {
         "id":  "129",
         "placa":  "UVA12G",
-        "nombre":  "Carlos F Guevara Vásquez",
+        "nombre":  "Carlos Fernando Guevara Vásquez",
         "cedula":  "1100973376",
         "cargo":  "LIDERES",
         "empresa":  "SEDIAL",
         "centroDistribucion":  "CD SAN GIL",
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
-        "licenciaCategoria":  "A2",
+        "licenciaCategoria":  "A1",
         "licenciaVencimiento":  "",
-        "soatVencimiento":  "2026-09-30",
-        "rtmVencimiento":  "2026-09-01",
+        "soatVencimiento":  "2026-09-22",
+        "rtmVencimiento":  "",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46154.807615740698"
+        "horaInicio":  "46220.335405092599"
     },
     {
         "id":  "130",
@@ -2246,7 +2246,7 @@
     {
         "id":  "133",
         "placa":  "KMG12G",
-        "nombre":  "Ivan martinez uribe",
+        "nombre":  "Ivan rene martinez uribe",
         "cedula":  "1100961596",
         "cargo":  "AUXILIARES DE REPARTO",
         "empresa":  "LEON LEON",
@@ -2254,18 +2254,18 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2027-11-02",
-        "soatVencimiento":  "2027-03-07",
-        "rtmVencimiento":  "2027-03-07",
+        "licenciaVencimiento":  "2033-09-16",
+        "soatVencimiento":  "2026-11-25",
+        "rtmVencimiento":  "2026-12-20",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46141.616990740702"
+        "horaInicio":  "46219.739930555603"
     },
     {
         "id":  "134",
         "placa":  "ZGX13H",
         "nombre":  "Yervinson Gabriel Flores Irumbe",
         "cedula":  "5656217",
-        "cargo":  "AUXILIARES DE REPARTO",
+        "cargo":  "RESPONSABLES REPARTO",
         "empresa":  "LEON LEON",
         "centroDistribucion":  "CD SAN GIL",
         "propiedad":  "Propio",
@@ -2275,12 +2275,12 @@
         "soatVencimiento":  "2026-12-10",
         "rtmVencimiento":  "2027-12-10",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46045.287511574097"
+        "horaInicio":  "46233.469178240703"
     },
     {
         "id":  "135",
         "placa":  "RYU07H",
-        "nombre":  "Omar Ramírez",
+        "nombre":  "Omar Orlando Ramírez Galvis",
         "cedula":  "1005272342",
         "cargo":  "AUXILIARES DE REPARTO",
         "empresa":  "LEON LEON",
@@ -2288,16 +2288,16 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "",
+        "licenciaVencimiento":  "2035-11-10",
         "soatVencimiento":  "2026-07-15",
-        "rtmVencimiento":  "",
+        "rtmVencimiento":  "2027-06-07",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46141.723645833299"
+        "horaInicio":  "46219.744629629597"
     },
     {
         "id":  "136",
         "placa":  "HBA05F",
-        "nombre":  "CHRISTIAN DANILO GUEVARA CASTRO",
+        "nombre":  "Christian Danilo Guevara Castro",
         "cedula":  "1092388657",
         "cargo":  "CONDUCTORES /LIDERES RUTA",
         "empresa":  "TEV",
@@ -2306,10 +2306,10 @@
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
         "licenciaVencimiento":  "2029-06-21",
-        "soatVencimiento":  "2026-04-22",
+        "soatVencimiento":  "2027-06-30",
         "rtmVencimiento":  "2027-04-22",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46153.560266203698"
+        "horaInicio":  "46218.449733796297"
     },
     {
         "id":  "137",
@@ -3393,11 +3393,11 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2034-08-07",
-        "soatVencimiento":  "2027-03-22",
-        "rtmVencimiento":  "2027-03-22",
+        "licenciaVencimiento":  "2027-08-09",
+        "soatVencimiento":  "2027-03-20",
+        "rtmVencimiento":  "2027-03-20",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46126.460162037001"
+        "horaInicio":  "46219.800266203703"
     },
     {
         "id":  "201",
@@ -3452,8 +3452,8 @@
     },
     {
         "id":  "204",
-        "placa":  "PZB 56D",
-        "nombre":  "LAURA FERNANDA VELASQUEZ AGUILLÓN",
+        "placa":  "PZB56D",
+        "nombre":  "LAURA FERNANDA VELASQUEZ AGUILLON",
         "cedula":  "1005449988",
         "cargo":  "ADMINISTRATIVOS",
         "empresa":  "LEON LEON",
@@ -3461,11 +3461,11 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A1",
-        "licenciaVencimiento":  "2032-08-30",
-        "soatVencimiento":  "2026-11-21",
-        "rtmVencimiento":  "2026-11-21",
+        "licenciaVencimiento":  "2032-09-07",
+        "soatVencimiento":  "2026-11-17",
+        "rtmVencimiento":  "2026-11-17",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46129.582164351901"
+        "horaInicio":  "46219.748437499999"
     },
     {
         "id":  "205",
@@ -3486,8 +3486,8 @@
     },
     {
         "id":  "206",
-        "placa":  "LKM78E",
-        "nombre":  "Brayan David Fuentes González",
+        "placa":  "KTW27E",
+        "nombre":  "Brayan David Fuentes",
         "cedula":  "1101623164",
         "cargo":  "CONDUCTORES /LIDERES RUTA",
         "empresa":  "LEON LEON",
@@ -3495,11 +3495,11 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "",
-        "soatVencimiento":  "2026-12-27",
-        "rtmVencimiento":  "2026-12-29",
+        "licenciaVencimiento":  "2034-11-14",
+        "soatVencimiento":  "2027-06-16",
+        "rtmVencimiento":  "2026-12-17",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46133.723807870403"
+        "horaInicio":  "46233.467118055603"
     },
     {
         "id":  "207",
@@ -3520,8 +3520,8 @@
     },
     {
         "id":  "208",
-        "placa":  "CAR19F",
-        "nombre":  "William Andres Bernal Cortes",
+        "placa":  "WIT16F",
+        "nombre":  "William Bernal",
         "cedula":  "1108453102",
         "cargo":  "CONDUCTORES /LIDERES RUTA",
         "empresa":  "LEON LEON",
@@ -3529,11 +3529,11 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2032-06-08",
-        "soatVencimiento":  "2027-02-02",
-        "rtmVencimiento":  "2027-02-02",
+        "licenciaVencimiento":  "2033-03-09",
+        "soatVencimiento":  "2029-07-26",
+        "rtmVencimiento":  "2028-06-22",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46146.262777777803"
+        "horaInicio":  "46233.485706018502"
     },
     {
         "id":  "209",
@@ -3588,7 +3588,7 @@
     },
     {
         "id":  "212",
-        "placa":  "DWO68I",
+        "placa":  "DWO 68I",
         "nombre":  "Elkin starling Martínez Álvarez",
         "cedula":  "1098808346",
         "cargo":  "AUXILIARES DE REPARTO",
@@ -3596,16 +3596,16 @@
         "centroDistribucion":  "CD BUCARAMANGA",
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
-        "licenciaCategoria":  "NO TENGO LICENCIA MOTO",
-        "licenciaVencimiento":  "",
-        "soatVencimiento":  "2028-03-30",
-        "rtmVencimiento":  "",
+        "licenciaCategoria":  "A2",
+        "licenciaVencimiento":  "2036-06-20",
+        "soatVencimiento":  "2027-03-30",
+        "rtmVencimiento":  "2028-03-30",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46153.5453472222"
+        "horaInicio":  "46218.436840277798"
     },
     {
         "id":  "213",
-        "placa":  "PGN 28D",
+        "placa":  "KFG 93I",
         "nombre":  "Jhon Harold Capacho Gonzalez",
         "cedula":  "1007618630",
         "cargo":  "CONDUCTORES /LIDERES RUTA",
@@ -3615,27 +3615,27 @@
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
         "licenciaVencimiento":  "2036-01-13",
-        "soatVencimiento":  "2027-01-11",
+        "soatVencimiento":  "2027-06-18",
         "rtmVencimiento":  "",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46153.575983796298"
+        "horaInicio":  "46218.433402777802"
     },
     {
         "id":  "214",
         "placa":  "ZTW93H",
-        "nombre":  "Daniel Felipe Rivera Rangel",
+        "nombre":  "DANIEL FELIPE RIVERA RANGEL",
         "cedula":  "1100975127",
-        "cargo":  "CONTRATISTAS",
+        "cargo":  "ADMINISTRATIVOS",
         "empresa":  "LEON LEON",
         "centroDistribucion":  "CD SAN GIL",
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
-        "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "",
-        "soatVencimiento":  "2026-12-15",
-        "rtmVencimiento":  "",
+        "licenciaCategoria":  "A1",
+        "licenciaVencimiento":  "2028-12-07",
+        "soatVencimiento":  "2026-12-16",
+        "rtmVencimiento":  "2026-12-17",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46154.270081018498"
+        "horaInicio":  "46220.414212962998"
     },
     {
         "id":  "215",
@@ -3710,17 +3710,17 @@
         "placa":  "BJF60I",
         "nombre":  "Nidia Mercedes castillo remolina",
         "cedula":  "1101048858",
-        "cargo":  "AUXILIARES DE ALMACEN",
+        "cargo":  "AUXILIARES DE REPARTO",
         "empresa":  "LEON LEON",
         "centroDistribucion":  "CD SAN GIL",
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2034-06-27",
-        "soatVencimiento":  "2027-02-04",
-        "rtmVencimiento":  "2028-02-04",
+        "licenciaVencimiento":  "2034-05-26",
+        "soatVencimiento":  "2027-01-31",
+        "rtmVencimiento":  "2028-01-31",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46156.709328703699"
+        "horaInicio":  "46219.787407407399"
     },
     {
         "id":  "220",
@@ -3903,15 +3903,15 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2028-01-06",
-        "soatVencimiento":  "2027-03-03",
+        "licenciaVencimiento":  "2027-11-19",
+        "soatVencimiento":  "2027-03-01",
         "rtmVencimiento":  "2027-03-01",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46171.501793981501"
+        "horaInicio":  "46220.472951388903"
     },
     {
         "id":  "231",
-        "placa":  "DER51A",
+        "placa":  "DER17D",
         "nombre":  "Johan Sneyder Sanchez Gonzáles",
         "cedula":  "1103390301",
         "cargo":  "AUXILIARES DE REPARTO",
@@ -3921,10 +3921,10 @@
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "NO TENGO LICENCIA MOTO",
         "licenciaVencimiento":  "",
-        "soatVencimiento":  "2026-04-23",
+        "soatVencimiento":  "2026-07-16",
         "rtmVencimiento":  "",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46171.501817129603"
+        "horaInicio":  "46219.771261574097"
     },
     {
         "id":  "232",
@@ -4050,17 +4050,17 @@
         "placa":  "KAG21G",
         "nombre":  "Yeifer alexis remolina blanco",
         "cedula":  "1004843826",
-        "cargo":  "CONTRATISTAS",
+        "cargo":  "AUXILIARES DE ALMACEN",
         "empresa":  "LIS",
         "centroDistribucion":  "CD FORJANDES",
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2032-09-26",
-        "soatVencimiento":  "2026-12-23",
-        "rtmVencimiento":  "2027-11-25",
+        "licenciaVencimiento":  "2032-09-16",
+        "soatVencimiento":  "2026-12-25",
+        "rtmVencimiento":  "2026-12-25",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46182.479641203703"
+        "horaInicio":  "46214.277939814798"
     },
     {
         "id":  "240",
@@ -4200,7 +4200,7 @@
     },
     {
         "id":  "248",
-        "placa":  "PCG26G",
+        "placa":  "PSG26G",
         "nombre":  "Ramón Andres Quintero Ariza",
         "cedula":  "85155454",
         "cargo":  "CONDUCTORES /LIDERES RUTA",
@@ -4213,7 +4213,7 @@
         "soatVencimiento":  "2027-05-29",
         "rtmVencimiento":  "2027-05-29",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46191.626180555599"
+        "horaInicio":  "46233.505231481497"
     },
     {
         "id":  "249",
@@ -4336,8 +4336,8 @@
     },
     {
         "id":  "256",
-        "placa":  "GBM08F",
-        "nombre":  "ALEJANDRO ALONSO CAJICA",
+        "placa":  "EOO81G",
+        "nombre":  "Alejandro Alonso Cajicá",
         "cedula":  "1032382755",
         "cargo":  "CONDUCTORES /LIDERES RUTA",
         "empresa":  "LEON LEON",
@@ -4345,11 +4345,11 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "MOTOCICLETA",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2028-03-19",
-        "soatVencimiento":  "2027-03-03",
-        "rtmVencimiento":  "2027-03-03",
+        "licenciaVencimiento":  "2026-07-31",
+        "soatVencimiento":  "2026-07-31",
+        "rtmVencimiento":  "2026-07-31",
         "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46199.484085648102"
+        "horaInicio":  "46219.739710648202"
     },
     {
         "id":  "257",
@@ -4455,20 +4455,20 @@
     },
     {
         "id":  "263",
-        "placa":  "MWN72G",
+        "placa":  "MWN 72G",
         "nombre":  "Daniel Santiago leal becerra",
         "cedula":  "1005373034",
         "cargo":  "AUXILIARES DE ALMACEN",
         "empresa":  "SEDIAL",
         "centroDistribucion":  "CD SAN GIL",
         "propiedad":  "Propio",
-        "tipoVehiculo":  "MOTOCICLETA",
+        "tipoVehiculo":  "CARRO",
         "licenciaCategoria":  "A1",
-        "licenciaVencimiento":  "2026-07-03",
-        "soatVencimiento":  "2026-07-03",
-        "rtmVencimiento":  "2026-07-03",
-        "rolVial":  "Conductor Motocicleta",
-        "horaInicio":  "46206.513124999998"
+        "licenciaVencimiento":  "2031-10-07",
+        "soatVencimiento":  "2026-07-17",
+        "rtmVencimiento":  "2026-07-24",
+        "rolVial":  "Conductor Vehículo",
+        "horaInicio":  "46220.340092592603"
     },
     {
         "id":  "264",
@@ -4498,11 +4498,11 @@
         "propiedad":  "Propio",
         "tipoVehiculo":  "CARRO",
         "licenciaCategoria":  "A2",
-        "licenciaVencimiento":  "2034-10-07",
-        "soatVencimiento":  "2026-09-08",
-        "rtmVencimiento":  "2026-09-10",
+        "licenciaVencimiento":  "2026-07-16",
+        "soatVencimiento":  "2026-09-10",
+        "rtmVencimiento":  "2026-09-08",
         "rolVial":  "Conductor Vehículo",
-        "horaInicio":  "46207.3764814815"
+        "horaInicio":  "46219.932511574101"
     },
     {
         "id":  "266",
@@ -4639,5 +4639,192 @@
         "rtmVencimiento":  "2028-01-30",
         "rolVial":  "Conductor Motocicleta",
         "horaInicio":  "46213.710324074098"
+    },
+    {
+        "id":  "274",
+        "placa":  "VGS89F",
+        "nombre":  "Sebastián Silva Ramirez",
+        "cedula":  "1098705175",
+        "cargo":  "CONDUCTORES /LIDERES RUTA",
+        "empresa":  "TEV",
+        "centroDistribucion":  "CD BUCARAMANGA",
+        "propiedad":  "Propio",
+        "tipoVehiculo":  "MOTOCICLETA",
+        "licenciaCategoria":  "A2",
+        "licenciaVencimiento":  "",
+        "soatVencimiento":  "2027-01-21",
+        "rtmVencimiento":  "2027-01-09",
+        "rolVial":  "Conductor Motocicleta",
+        "horaInicio":  "46218.430127314801"
+    },
+    {
+        "id":  "275",
+        "placa":  "NIZ36E",
+        "nombre":  "José albeiro Velasco rueda",
+        "cedula":  "1098652201",
+        "cargo":  "AUXILIARES DE REPARTO",
+        "empresa":  "TEV",
+        "centroDistribucion":  "CD BUCARAMANGA",
+        "propiedad":  "De un Tercero",
+        "tipoVehiculo":  "MOTOCICLETA",
+        "licenciaCategoria":  "A1",
+        "licenciaVencimiento":  "",
+        "soatVencimiento":  "2026-05-30",
+        "rtmVencimiento":  "2026-05-30",
+        "rolVial":  "Conductor Motocicleta",
+        "horaInicio":  "46218.449328703697"
+    },
+    {
+        "id":  "276",
+        "placa":  "FFQ 48A",
+        "nombre":  "Oscar Andrés Ayala Artunduaga",
+        "cedula":  "1000688180",
+        "cargo":  "CONDUCTORES /LIDERES RUTA",
+        "empresa":  "TEV",
+        "centroDistribucion":  "CD BUCARAMANGA",
+        "propiedad":  "Propio",
+        "tipoVehiculo":  "MOTOCICLETA",
+        "licenciaCategoria":  "A2",
+        "licenciaVencimiento":  "2031-03-19",
+        "soatVencimiento":  "2026-11-03",
+        "rtmVencimiento":  "2026-11-02",
+        "rolVial":  "Conductor Motocicleta",
+        "horaInicio":  "46218.466574074097"
+    },
+    {
+        "id":  "277",
+        "placa":  "YLZ59F",
+        "nombre":  "Jaider Orlando Pedraza Castillo",
+        "cedula":  "1005297527",
+        "cargo":  "CONDUCTORES /LIDERES RUTA",
+        "empresa":  "TEV",
+        "centroDistribucion":  "CD BUCARAMANGA",
+        "propiedad":  "De un Tercero",
+        "tipoVehiculo":  "MOTOCICLETA",
+        "licenciaCategoria":  "A2",
+        "licenciaVencimiento":  "2032-12-12",
+        "soatVencimiento":  "2026-10-02",
+        "rtmVencimiento":  "2026-10-06",
+        "rolVial":  "Conductor Motocicleta",
+        "horaInicio":  "46218.529571759304"
+    },
+    {
+        "id":  "278",
+        "placa":  "TKI17G",
+        "nombre":  "Brayan steven Ortega villamizar",
+        "cedula":  "1097302459",
+        "cargo":  "AUXILIARES DE REPARTO",
+        "empresa":  "LEON LEON",
+        "centroDistribucion":  "CD BUCARAMANGA",
+        "propiedad":  "Propio",
+        "tipoVehiculo":  "MOTOCICLETA",
+        "licenciaCategoria":  "A2",
+        "licenciaVencimiento":  "2033-07-29",
+        "soatVencimiento":  "2026-10-07",
+        "rtmVencimiento":  "2026-10-07",
+        "rolVial":  "Conductor Motocicleta",
+        "horaInicio":  "46220.632881944402"
+    },
+    {
+        "id":  "279",
+        "placa":  "WBA71H",
+        "nombre":  "Sebastián Domínguez Jacome",
+        "cedula":  "1002159103",
+        "cargo":  "AUXILIARES DE REPARTO",
+        "empresa":  "LEON LEON",
+        "centroDistribucion":  "CD FORJANDES",
+        "propiedad":  "Propio",
+        "tipoVehiculo":  "MOTOCICLETA",
+        "licenciaCategoria":  "A1",
+        "licenciaVencimiento":  "2035-10-17",
+        "soatVencimiento":  "2026-09-17",
+        "rtmVencimiento":  "",
+        "rolVial":  "Conductor Motocicleta",
+        "horaInicio":  "46224.636898148201"
+    },
+    {
+        "id":  "280",
+        "placa":  "JRQ83H",
+        "nombre":  "Deiby Alexander herrera archila",
+        "cedula":  "1095302457",
+        "cargo":  "AUXILIARES DE REPARTO",
+        "empresa":  "LEON LEON",
+        "centroDistribucion":  "CD FORJANDES",
+        "propiedad":  "Propio",
+        "tipoVehiculo":  "CARRO",
+        "licenciaCategoria":  "A2",
+        "licenciaVencimiento":  "2034-05-11",
+        "soatVencimiento":  "2027-05-28",
+        "rtmVencimiento":  "",
+        "rolVial":  "Conductor Motocicleta",
+        "horaInicio":  "46224.6355555556"
+    },
+    {
+        "id":  "281",
+        "placa":  "QGP 13G",
+        "nombre":  "Yoiner Saúl Albarracin",
+        "cedula":  "1116805004",
+        "cargo":  "CONDUCTORES /LIDERES RUTA",
+        "empresa":  "LEON LEON",
+        "centroDistribucion":  "CD FORJANDES",
+        "propiedad":  "Propio",
+        "tipoVehiculo":  "MOTOCICLETA",
+        "licenciaCategoria":  "A2",
+        "licenciaVencimiento":  "2033-05-25",
+        "soatVencimiento":  "2026-12-15",
+        "rtmVencimiento":  "2026-12-15",
+        "rolVial":  "Conductor Motocicleta",
+        "horaInicio":  "46224.642280092601"
+    },
+    {
+        "id":  "282",
+        "placa":  "THE68D",
+        "nombre":  "Renzo Fauricio Villate Bautista",
+        "cedula":  "1098649305",
+        "cargo":  "ADMINISTRATIVOS",
+        "empresa":  "LEON LEON",
+        "centroDistribucion":  "CD FORJANDES",
+        "propiedad":  "Propio",
+        "tipoVehiculo":  "MOTOCICLETA",
+        "licenciaCategoria":  "A2",
+        "licenciaVencimiento":  "2033-09-04",
+        "soatVencimiento":  "2027-02-05",
+        "rtmVencimiento":  "",
+        "rolVial":  "Conductor Motocicleta",
+        "horaInicio":  "46225.698171296302"
+    },
+    {
+        "id":  "283",
+        "placa":  "QPG44G",
+        "nombre":  "Steven Armando Herrera archila",
+        "cedula":  "1005107994",
+        "cargo":  "AUXILIARES DE REPARTO",
+        "empresa":  "LEON LEON",
+        "centroDistribucion":  "CD FORJANDES",
+        "propiedad":  "Propio",
+        "tipoVehiculo":  "CARRO",
+        "licenciaCategoria":  "A2",
+        "licenciaVencimiento":  "",
+        "soatVencimiento":  "2026-07-17",
+        "rtmVencimiento":  "2026-07-17",
+        "rolVial":  "Conductor Vehículo",
+        "horaInicio":  "46226.6739467593"
+    },
+    {
+        "id":  "284",
+        "placa":  "ZTR87C",
+        "nombre":  "Fernando Acevedo",
+        "cedula":  "91073571",
+        "cargo":  "CONDUCTORES /LIDERES RUTA",
+        "empresa":  "LEON LEON",
+        "centroDistribucion":  "CD SAN GIL",
+        "propiedad":  "Propio",
+        "tipoVehiculo":  "MOTOCICLETA",
+        "licenciaCategoria":  "A2",
+        "licenciaVencimiento":  "2034-02-08",
+        "soatVencimiento":  "2027-03-03",
+        "rtmVencimiento":  "2027-03-05",
+        "rolVial":  "Conductor Motocicleta",
+        "horaInicio":  "46233.471851851798"
     }
 ];
