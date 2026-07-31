@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V16_CD_COLUMN_X';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V17_LATEST_COL_B';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of clean Column X CD dataset
+    // Clear all obsolete old caches to force fresh load of 243 latest submission vehicles
     try {
       localStorage.removeItem('CEDI_VEHICLES_DATA');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_DATA_GEOVICTORIA');
@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_REALTIME_V11_EXACT_DATES');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_REALTIME_V13_DYNAMIC_LATEST_FILE');
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V15_ROLE_MAPPED');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V16_CD_COLUMN_X');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
@@ -1214,13 +1215,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetInitialBtn = document.getElementById('resetInitialDataBtn');
   if (resetInitialBtn) {
     resetInitialBtn.addEventListener('click', () => {
-      if (confirm('¿Desea restablecer la base de datos con los 344 vehículos del archivo de encuesta más reciente?')) {
+      if (confirm('¿Desea restablecer la base de datos con los 243 vehículos de las respuestas más recientes (Col. B)?')) {
         vehicles = window.INITIAL_VEHICLES || [];
         saveData();
         renderDatabaseTable();
         renderBadgesList();
         updateDashboardMetrics();
-        alert('Se han cargado los 344 vehículos del archivo de encuesta más reciente exitosamente.');
+        alert('Se han cargado los 243 vehículos de las respuestas más recientes exitosamente.');
       }
     });
   }
@@ -1399,7 +1400,37 @@ document.addEventListener('DOMContentLoaded', () => {
           (window.INITIAL_VEHICLES || vehicles).map(v => (v.cedula || '').toString().replace(/[^0-9]/g, '').replace(/^0+/, ''))
         );
 
-        // Map strictly enforcing 1 UNIQUE record per (cedula + tipoVehiculo + placa)
+        // 1. Group rows by clean Cedula and select EXCLUSIVELY the single latest row by Col B (Hora de inicio)
+        const rowsByCedulaMap = new Map();
+
+        jsonData.forEach((row) => {
+          const rawCedula = (row['CEDULA (SIN PUNTOS)'] || row['Cedula'] || row['CEDULA'] || '').toString();
+          const cleanCedula = rawCedula.replace(/[^0-9]/g, '').replace(/^0+/, '');
+          if (!cleanCedula) return;
+
+          const rawTime = row['Hora de inicio'] || row['HORA DE INICIO'] || row['Hora inicio'] || row['B'] || 0;
+          let numTime = parseFloat(rawTime);
+          if (isNaN(numTime)) {
+            const dt = new Date(rawTime);
+            numTime = isNaN(dt.getTime()) ? 0 : dt.getTime();
+          }
+
+          const item = { row, cleanCedula, numTime };
+
+          if (!rowsByCedulaMap.has(cleanCedula)) {
+            rowsByCedulaMap.set(cleanCedula, []);
+          }
+          rowsByCedulaMap.get(cleanCedula).push(item);
+        });
+
+        // Select single latest submission per collaborator
+        const latestSubmissionRows = [];
+        rowsByCedulaMap.forEach((list) => {
+          list.sort((a, b) => b.numTime - a.numTime);
+          latestSubmissionRows.push(list[0].row);
+        });
+
+        // Map strictly enforcing 1 UNIQUE record per (cedula + tipoVehiculo + placa) from latest submission
         const dedupedRecordsMap = new Map();
         let exemptCount = 0;
         let activeCount = 0;
@@ -1407,7 +1438,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let ignoredRoleCount = 0;
         let duplicatesFiltered = 0;
 
-        jsonData.forEach((row) => {
+        latestSubmissionRows.forEach((row) => {
           // 2. Rol Vial Filter (Col. AM)
           const rolVial = (row['SELECCIONE EL ROL VIAL HABITUAL QUE UTILIZA PARA DESPLAZARSE CASA-TRABAJO-CASA'] || row['ROL VIAL'] || '').toString().trim();
           const rolLower = rolVial.toLowerCase();
