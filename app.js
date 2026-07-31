@@ -1338,45 +1338,106 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const data = new Uint8Array(evt.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
+        if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
+          throw new Error("El archivo Excel se encuentra vacío o dañado.");
+        }
+
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
-        let importedCount = 0;
-        jsonData.forEach(row => {
-          const placa = (row['PLACA'] || row['Placa'] || row['placa'] || '').toString().trim().toUpperCase();
+        if (!jsonData || jsonData.length === 0) {
+          throw new Error("La hoja de Excel seleccionada no contiene registros.");
+        }
+
+        // 1. VALIDACIÓN DE ESTRUCTURA DEL ARCHIVO
+        const firstRow = jsonData[0];
+        const keys = Object.keys(firstRow);
+        
+        const hasCedulaCol = keys.some(k => k.includes('CEDULA') || k.includes('Cedula') || k.includes('L'));
+        const hasNombreCol = keys.some(k => k.includes('NOMBRE') || k.includes('Nombre') || k.includes('O'));
+        const hasEmpresaCol = keys.some(k => k.includes('EMPRESA') || k.includes('Empresa') || k.includes('U'));
+
+        if (!hasCedulaCol || !hasNombreCol || !hasEmpresaCol) {
+          alert("❌ Estructura de Excel No Válida:\n\nEl archivo cargado no cumple con la estructura esperada de la encuesta ('CEDULA (SIN PUNTOS)', 'NOMBRE', 'EMPRESA').\n\nSe conservará la última versión válida de la base de datos.");
+          return;
+        }
+
+        // Active cedulas set for JOIN comparison
+        const activeCedulas = new Set(
+          (window.INITIAL_VEHICLES || vehicles).map(v => (v.cedula || '').toString().replace(/[^0-9]/g, '').replace(/^0+/, ''))
+        );
+
+        const newRecords = [];
+        let exemptCount = 0;
+        let activeCount = 0;
+        let ignoredCount = 0;
+
+        jsonData.forEach((row, idx) => {
+          // Extract fields
+          const rawCedula = (row['CEDULA (SIN PUNTOS)'] || row['Cedula'] || row['CEDULA'] || '').toString();
+          const cleanCedula = rawCedula.replace(/[^0-9]/g, '').replace(/^0+/, '');
+          if (!cleanCedula) return;
+
           const nombre = (row['NOMBRE COMPLETO Y APELLIDOS'] || row['Nombre'] || row['NOMBRE'] || '').toString().trim();
-          const cedula = (row['CEDULA (SIN PUNTOS)'] || row['Cedula'] || row['CEDULA'] || '').toString().trim();
+          if (!nombre) return;
 
-          if (placa && nombre) {
-            const existingIdx = vehicles.findIndex(x => x.placa === placa);
-            const vData = {
-              id: existingIdx !== -1 ? vehicles[existingIdx].id : Date.now().toString() + Math.random().toString(36).substr(2, 4),
-              placa,
-              nombre,
-              cedula,
-              tipoVehiculo: (row['TIPO DE VEHICULO'] || row['Tipo'] || 'MOTOCICLETA').toString().toUpperCase(),
-              empresa: row['EMPRESA'] || 'CEDI',
-              cargo: row['POSICIONES'] || 'COLABORADOR',
-              soatVencimiento: row['FECHA VENCIMIENTO SOAT'] || '',
-              rtmVencimiento: row['FECHA VENCIMIENTO RTM'] || '',
-              licenciaCategoria: row['CATEGORIA LICENCIA'] || 'B1',
-              licenciaVencimiento: row['FECHA VENCIMIENTO LICENCIA'] || ''
-            };
+          const empresa = (row['EMPRESA'] || row['Empresa'] || 'CEDI').toString().trim();
+          const empresaUpper = empresa.toUpperCase();
 
-            if (existingIdx !== -1) {
-              vehicles[existingIdx] = { ...vehicles[existingIdx], ...vData };
-            } else {
-              vehicles.push(vData);
+          // Rule: ABI, HONOR, RENTAS bypass active check
+          const isExempt = (empresaUpper.includes('ABI') || empresaUpper.includes('HONOR') || empresaUpper.includes('RENTAS'));
+
+          if (!isExempt) {
+            // Must exist in active master set
+            if (!activeCedulas.has(cleanCedula)) {
+              ignoredCount++;
+              return;
             }
-            importedCount++;
+            activeCount++;
+          } else {
+            exemptCount++;
           }
+
+          let placa = (row['PLACA'] || row['Placa'] || row['placa'] || row['SELECCIONE EL TIPO DE VEHICULO'] || '').toString().trim().toUpperCase();
+          if (!placa || placa === '0' || placa === 'N/A' || placa === 'NO APLICA' || placa === 'VVV') {
+            placa = `CC-${cleanCedula}`;
+          }
+
+          const tipoVehiculoRaw = (row['TIPO DE VEHICULO'] || row['Tipo'] || 'MOTOCICLETA').toString().toUpperCase();
+          const tipoVehiculo = tipoVehiculoRaw.includes('CARRO') || tipoVehiculoRaw.includes('CAMIONETA') ? 'CARRO' : 'MOTOCICLETA';
+
+          const rawSoat = row['FECHA VENCIMIENTO SOAT'] || row['SOAT'] || '';
+          const rawRtm = row['FECHA VENCIMIENTO RTM'] || row['RTM'] || '';
+          const rawLicCat = row['CATEGORIA DE LICENCIA OPCION 1'] || row['CATEGORIA LICENCIA'] || row['CATEGORIA'] || 'B1';
+          const rawLicVenc = row['FECHA VENCIMIENTO OPCION 1'] || row['FECHA VENCIMIENTO LICENCIA'] || row['VENCIMIENTO LICENCIA'] || '';
+
+          newRecords.push({
+            id: (idx + 1).toString(),
+            placa,
+            nombre,
+            cedula: cleanCedula,
+            tipoVehiculo,
+            empresa,
+            centroDistribucion: row['CENTRO DE DISTRIBUCION'] || row['CD'] || 'CEDI',
+            cargo: row['POSICIONES'] || row['CARGO'] || 'COLABORADOR',
+            soatVencimiento: formatDateISO(rawSoat),
+            rtmVencimiento: formatDateISO(rawRtm),
+            licenciaCategoria: rawLicCat.toString().toUpperCase(),
+            licenciaVencimiento: formatDateISO(rawLicVenc)
+          });
         });
 
+        if (newRecords.length === 0) {
+          alert("⚠️ No se encontraron registros válidos de colaboradores activos ni exentos en el archivo subido. Se conserva la versión anterior.");
+          return;
+        }
+
+        vehicles = newRecords;
         saveData();
-        alert(`¡Importación exitosa! Se procesaron ${importedCount} vehículos.`);
+        alert(`✅ ¡Base de datos de Encuesta actualizada exitosamente!\n\n- Registros procesados: ${newRecords.length}\n- Personal Activo Geovictoria: ${activeCount}\n- Exenciones (ABI/HONOR/RENTAS): ${exemptCount}\n- Registros Inactivos Ignorados: ${ignoredCount}`);
       } catch (err) {
-        alert("Error al leer el archivo Excel: " + err.message);
+        alert("❌ Error al procesar el archivo Excel: " + err.message + "\nSe conservará la última versión válida de la base de datos.");
       }
     };
     reader.readAsArrayBuffer(file);
