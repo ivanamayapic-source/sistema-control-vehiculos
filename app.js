@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V36_REAL_PHYSICAL_FILE_PERSISTENCE';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V37_SUPABASE_PRIMARY_DATABASE';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -24,8 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function initData() {
-    // Clear all obsolete old caches to force fresh load of physical file persistence
+  async function initData() {
+    // Clear all obsolete old caches to force fresh load
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -37,23 +37,67 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V35_PERMANENT_PRINCIPAL_DB_SYNC');
     } catch (e) {}
 
-    const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
-      ? window.INITIAL_VEHICLES 
-      : [];
-
-    // Always prefer fresh window.INITIAL_VEHICLES on load to guarantee exact Excel data sync
-    vehicles = initialList;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(vehicles));
-
+    // First: Load from Supabase Cloud as Primary Official Database Source
+    let loadedFromSupabase = false;
     if (supabaseClient) {
-      syncWithSupabase();
+      loadedFromSupabase = await fetchVehiclesFromSupabase();
     }
+
+    if (!loadedFromSupabase) {
+      // Fallback to local storage or initial dataset if Supabase is offline
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          vehicles = JSON.parse(saved);
+        } catch (e) {
+          vehicles = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) ? window.INITIAL_VEHICLES : [];
+        }
+      } else {
+        vehicles = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) ? window.INITIAL_VEHICLES : [];
+      }
+      saveDataLocally();
+      if (supabaseClient) {
+        syncWithSupabase();
+      }
+    }
+  }
+
+  async function fetchVehiclesFromSupabase() {
+    if (!supabaseClient) return false;
+    try {
+      let res = await supabaseClient.from('vehicles').select('*');
+      if (res.error || !res.data || res.data.length === 0) {
+        res = await supabaseClient.from('vehiculos').select('*');
+      }
+      if (!res.error && res.data && res.data.length > 0) {
+        const mapped = res.data.map(row => ({
+          id: row.id ? row.id.toString() : (Date.now() + Math.random()).toString(),
+          placa: row.placa || '',
+          nombre: row.nombre || '',
+          cedula: row.cedula || '',
+          tipoVehiculo: row.tipo_vehiculo || 'MOTOCICLETA',
+          empresa: row.empresa || 'CEDI',
+          centroDistribucion: row.centro_distribucion || 'CD BUCARAMANGA',
+          cargo: row.cargo || 'COLABORADOR',
+          soatVencimiento: row.soat_vencimiento || 'N/A',
+          rtmVencimiento: row.rtm_vencimiento || 'N/A',
+          licenciaCategoria: row.licencia_categoria || 'SIN CATEGORÍA',
+          licenciaVencimiento: row.licencia_vencimiento || 'N/A'
+        }));
+        vehicles = mapped;
+        saveDataLocally();
+        console.log(`✅ Base de datos cargada desde Supabase Cloud oficial (${vehicles.length} registros).`);
+        return true;
+      }
+    } catch (err) {
+      console.warn("⚠️ No se pudo consultar Supabase Cloud directamente:", err);
+    }
+    return false;
   }
 
   async function syncWithSupabase() {
     if (!supabaseClient) return;
     try {
-      // Upsert local active driver records to Supabase to keep cloud database synchronized with the 255 active drivers
       const recordsToUpsert = vehicles.map(v => ({
         id: v.id,
         placa: v.placa,
@@ -61,46 +105,61 @@ document.addEventListener('DOMContentLoaded', () => {
         cedula: v.cedula,
         tipo_vehiculo: v.tipoVehiculo,
         empresa: v.empresa || 'CEDI',
-        centro_distribucion: v.centroDistribucion || 'CEDI',
+        centro_distribucion: v.centroDistribucion || 'CD BUCARAMANGA',
         cargo: v.cargo || 'COLABORADOR',
-        soat_vencimiento: v.soatVencimiento || null,
-        rtm_vencimiento: v.rtmVencimiento || null,
-        licencia_categoria: v.licenciaCategoria || 'B1',
-        licencia_vencimiento: v.licenciaVencimiento || null,
+        soat_vencimiento: v.soatVencimiento !== 'N/A' ? v.soatVencimiento : null,
+        rtm_vencimiento: v.rtmVencimiento !== 'N/A' ? v.rtmVencimiento : null,
+        licencia_categoria: v.licenciaCategoria || 'SIN CATEGORÍA',
+        licencia_vencimiento: v.licenciaVencimiento !== 'N/A' ? v.licenciaVencimiento : null,
         updated_at: new Date().toISOString()
       }));
 
-      const { error } = await supabaseClient.from('vehiculos').upsert(recordsToUpsert, { onConflict: 'placa' });
-      if (error) {
-        console.error('Supabase cloud sync error:', error);
-      } else {
-        console.log('Supabase Cloud Database sincronizado exitosamente con los 255 activos');
+      let res = await supabaseClient.from('vehicles').upsert(recordsToUpsert, { onConflict: 'id' });
+      if (res.error) {
+        await supabaseClient.from('vehiculos').upsert(recordsToUpsert, { onConflict: 'id' });
       }
     } catch (e) {
-      console.error('Supabase fetch error:', e);
+      console.error('Supabase sync error:', e);
     }
   }
 
   async function saveToSupabase(vehicle) {
     if (!supabaseClient) return;
+    const dbObj = {
+      id: vehicle.id,
+      placa: vehicle.placa,
+      nombre: vehicle.nombre,
+      cedula: vehicle.cedula,
+      tipo_vehiculo: vehicle.tipoVehiculo,
+      empresa: vehicle.empresa || 'CEDI',
+      centro_distribucion: vehicle.centroDistribucion || 'CD BUCARAMANGA',
+      cargo: vehicle.cargo || 'COLABORADOR',
+      soat_vencimiento: vehicle.soatVencimiento !== 'N/A' ? vehicle.soatVencimiento : null,
+      rtm_vencimiento: vehicle.rtmVencimiento !== 'N/A' ? vehicle.rtmVencimiento : null,
+      licencia_categoria: vehicle.licenciaCategoria || 'SIN CATEGORÍA',
+      licencia_vencimiento: vehicle.licenciaVencimiento !== 'N/A' ? vehicle.licenciaVencimiento : null,
+      updated_at: new Date().toISOString()
+    };
+
     try {
-      await supabaseClient.from('vehiculos').upsert({
-        id: vehicle.id,
-        placa: vehicle.placa,
-        nombre: vehicle.nombre,
-        cedula: vehicle.cedula,
-        tipo_vehiculo: vehicle.tipoVehiculo,
-        empresa: vehicle.empresa,
-        centro_distribucion: vehicle.centroDistribucion,
-        cargo: vehicle.cargo,
-        soat_vencimiento: vehicle.soatVencimiento || null,
-        rtm_vencimiento: vehicle.rtmVencimiento || null,
-        licencia_categoria: vehicle.licenciaCategoria,
-        licencia_vencimiento: vehicle.licenciaVencimiento || null,
-        updated_at: new Date().toISOString()
-      });
+      let res = await supabaseClient.from('vehicles').upsert(dbObj, { onConflict: 'id' });
+      if (res.error) {
+        await supabaseClient.from('vehiculos').upsert(dbObj, { onConflict: 'id' });
+      }
     } catch (e) {
-      console.error('Error saving to Supabase:', e);
+      console.error('Error al guardar en Supabase:', e);
+    }
+  }
+
+  async function deleteFromSupabase(vehicleId) {
+    if (!supabaseClient) return;
+    try {
+      let res = await supabaseClient.from('vehicles').delete().eq('id', vehicleId);
+      if (res.error) {
+        await supabaseClient.from('vehiculos').delete().eq('id', vehicleId);
+      }
+    } catch (e) {
+      console.error('Error al eliminar en Supabase:', e);
     }
   }
 
@@ -2113,6 +2172,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (downloadSyncExcelBtn) {
     downloadSyncExcelBtn.addEventListener('click', () => {
       exportSynchronizedExcel();
+    });
+  }
+
+  const exportMainDbExcelBtn = document.getElementById('exportMainDbExcelBtn');
+  if (exportMainDbExcelBtn) {
+    exportMainDbExcelBtn.addEventListener('click', () => {
+      exportSynchronizedExcel();
+      alert("✅ Base de datos exportada exitosamente desde la base de datos principal de Supabase.");
     });
   }
 

@@ -452,15 +452,12 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
-          <label class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm cursor-pointer shadow-lg shadow-emerald-600/20">
-            <i class="fa-solid fa-file-excel"></i> Importar Excel
+          <label class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm cursor-pointer shadow-lg shadow-indigo-600/20" title="Importar nuevo archivo de encuesta Excel para procesar y cargar a Supabase">
+            <i class="fa-solid fa-file-import"></i> Importar Excel
             <input type="file" id="excelFileInput" accept=".xlsx, .xls" class="hidden">
           </label>
-          <button id="exportExcelBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm border border-slate-700">
-            <i class="fa-solid fa-download text-emerald-400"></i> Exportar a Excel
-          </button>
-          <button id="resetInitialDataBtn" title="Restablecer los 242 vehículos de las respuestas más recientes (Col. B)" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm border border-slate-700">
-            <i class="fa-solid fa-arrow-rotate-left text-amber-400"></i> Cargar 242 Vehículos
+          <button id="exportMainDbExcelBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm shadow-lg shadow-emerald-600/20" title="Generar y descargar copia oficial de la base de datos de Supabase en Excel">
+            <i class="fa-solid fa-file-excel text-emerald-200"></i> 📤 Exportar Base de Datos
           </button>
           <button id="addNewVehicleBtn" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm shadow-lg shadow-amber-500/20">
             <i class="fa-solid fa-plus"></i> Nuevo Vehículo
@@ -865,7 +862,7 @@
   </footer>
 
   <!-- Scripts -->
-  <script src="data.js?v=v36_real_physical_file_persistence"></script>
-  <script src="app.js?v=v36_real_physical_file_persistence"></script>
+  <script src="data.js?v=v37_supabase_primary_database"></script>
+  <script src="app.js?v=v37_supabase_primary_database"></script>
 </body>
 </html>
