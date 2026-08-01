@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V37_SUPABASE_PRIMARY_DATABASE';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V38_SMART_SYNC_IMPORT';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -2022,18 +2022,71 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         });
 
-        const newRecords = Array.from(dedupedRecordsMap.values());
+        const incomingRecords = Array.from(dedupedRecordsMap.values());
 
-        if (newRecords.length === 0) {
+        if (incomingRecords.length === 0) {
           alert("⚠️ No se encontraron registros válidos de conductores activos ni exentos en el archivo subido. Se conserva la versión anterior.");
           return;
         }
 
-        vehicles = newRecords;
+        // -------------------------------------------------------------------------
+        // SMART SYNC WITH EXISTING SUPABASE / ACTIVE DATASET
+        // -------------------------------------------------------------------------
+        let addedCount = 0;
+        let updatedCount = 0;
+
+        const mergedVehiclesMap = new Map();
+
+        // 1. Keep existing vehicles that were not deleted by admin
+        vehicles.forEach(v => {
+          const k = `${v.cedula}_${v.tipoVehiculo}`;
+          if (!deletedVehicleKeysSet.has(k) && !deletedVehicleKeysSet.has(`${v.cedula}_${v.placa}`)) {
+            mergedVehiclesMap.set(k, v);
+          }
+        });
+
+        // 2. Process incoming records from new Excel file
+        incomingRecords.forEach(incRecord => {
+          const k = `${incRecord.cedula}_${incRecord.tipoVehiculo}`;
+
+          // Skip if deleted by Admin
+          if (deletedVehicleKeysSet.has(k) || deletedVehicleKeysSet.has(`${incRecord.cedula}_${incRecord.placa}`)) {
+            return;
+          }
+
+          if (mergedVehiclesMap.has(k)) {
+            // Existing record: SMART UPDATE non-manual fields
+            const curr = mergedVehiclesMap.get(k);
+            const ov = manualOverridesMap.get(k);
+
+            const mergedObj = {
+              ...curr,
+              nombre: incRecord.nombre || curr.nombre,
+              empresa: incRecord.empresa || curr.empresa,
+              centroDistribucion: incRecord.centroDistribucion || curr.centroDistribucion,
+              cargo: incRecord.cargo || curr.cargo,
+              // Keep manual plate/dates if manually edited, otherwise update with new survey data
+              placa: (ov && ov.placa) ? curr.placa : incRecord.placa,
+              soatVencimiento: (ov && ov.soatVencimiento) ? curr.soatVencimiento : incRecord.soatVencimiento,
+              rtmVencimiento: (ov && ov.rtmVencimiento) ? curr.rtmVencimiento : incRecord.rtmVencimiento,
+              licenciaCategoria: (ov && ov.licenciaCategoria) ? curr.licenciaCategoria : incRecord.licenciaCategoria,
+              licenciaVencimiento: (ov && ov.licenciaVencimiento) ? curr.licenciaVencimiento : incRecord.licenciaVencimiento
+            };
+            mergedVehiclesMap.set(k, mergedObj);
+            updatedCount++;
+          } else {
+            // New record: INSERT
+            mergedVehiclesMap.set(k, incRecord);
+            addedCount++;
+          }
+        });
+
+        vehicles = Array.from(mergedVehiclesMap.values());
         saveData();
-        alert(`✅ ¡Base de datos de vehículos cargada exitosamente!\n\n- Total vehículos procesados: ${newRecords.length}\n- Personal Activo Geovictoria: ${activeCount}\n- Exenciones (ABI/HONOR/RENTAS): ${exemptCount}\n- Roles no conductores ignorados: ${ignoredRoleCount}\n- Duplicados Filtrados: ${duplicatesFiltered}`);
+
+        alert(`✅ ¡Sincronización Inteligente de Base de Datos finalizada exitosamente!\n\n- Total Vehículos en Base de Datos: ${vehicles.length}\n- Registros Nuevos Agregados: ${addedCount}\n- Registros Existentes Actualizados: ${updatedCount}\n- Personal Activo Geovictoria Validado: ${activeCount}\n- Exenciones Aplicadas (ABI/HONOR/RENTAS): ${exemptCount}\n- Registros Duplicados / Inválidos Filtrados: ${duplicatesFiltered}`);
       } catch (err) {
-        alert("❌ Error al procesar el archivo Excel: " + err.message + "\nSe conservará la última versión válida de la base de datos.");
+        alert("❌ Error al procesar la sincronización inteligente: " + err.message + "\nSe conservará la última versión válida de la base de datos.");
       }
     };
     reader.readAsArrayBuffer(file);
