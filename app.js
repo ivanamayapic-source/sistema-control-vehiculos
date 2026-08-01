@@ -10,15 +10,15 @@ document.addEventListener('DOMContentLoaded', () => {
   let vehicles = [];
   const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V47_PERSISTENT_DELETIONS_FIX';
 
-  // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
-  const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
-  const SUPABASE_KEY = window.SUPABASE_KEY || localStorage.getItem('SUPABASE_KEY') || '';
+  // Supabase Cloud Sync Configuration (Project: zamqqaiipwatbaubvlpq)
+  const SUPABASE_URL = 'https://zamqqaiipwatbaubvlpq.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InphbXFxYWlpcHdhdGJhdWJ2bHBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyNzY0ODMsImV4cCI6MjEwMDg1MjQ4M30.cbMqVG_zNbLJPz2VYGTLOAMd3WslBEA0Bng4JKriByA';
   let supabaseClient = null;
 
   if (window.supabase && SUPABASE_URL && SUPABASE_KEY) {
     try {
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      console.log('Supabase Cloud Database (zamqqaiipwatbaubvlpq) Conectado Correctamente');
+      console.log('📡 Supabase Cloud Sync conectado correctamente (zamqqaiipwatbaubvlpq)');
     } catch (err) {
       console.error('Error conectando a Supabase:', err);
     }
@@ -48,53 +48,54 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {}
   }
 
-  function initData() {
-    // Clear all obsolete old caches to force fresh load
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('CEDI_ACTIVE_VEHICLES') && key !== STORAGE_KEY) {
-          localStorage.removeItem(key);
-        }
-      }
-      localStorage.removeItem('CEDI_VEHICLES_DATA');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V35_PERMANENT_PRINCIPAL_DB_SYNC');
-    } catch (e) {}
+  // --- Helper: Convert a Supabase row to our local vehicle object format ---
+  function supabaseRowToVehicle(row) {
+    return {
+      id: row.id || `${row.cedula}_${row.placa}`,
+      placa: row.placa || '',
+      nombre: row.nombre || '',
+      cedula: row.cedula || '',
+      tipoVehiculo: row.tipo_vehiculo || row.tipoVehiculo || 'CARRO',
+      empresa: row.empresa || 'CEDI',
+      centroDistribucion: row.centro_distribucion || row.centroDistribucion || 'CD BUCARAMANGA',
+      cargo: row.cargo || 'COLABORADOR',
+      soatVencimiento: row.soat_vencimiento || row.soatVencimiento || 'N/A',
+      rtmVencimiento: row.rtm_vencimiento || row.rtmVencimiento || 'N/A',
+      licenciaCategoria: row.licencia_categoria || row.licenciaCategoria || 'SIN CATEGORÍA',
+      licenciaVencimiento: row.licencia_vencimiento || row.licenciaVencimiento || 'N/A'
+    };
+  }
 
-    // First: Load saved vehicles from localStorage if available
-    let rawList = [];
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          rawList = parsed;
-        }
-      } catch (e) {}
-    }
+  // --- Helper: Convert local vehicle object to Supabase row format ---
+  function vehicleToSupabaseRow(v) {
+    return {
+      id: v.id,
+      placa: v.placa,
+      nombre: v.nombre,
+      cedula: v.cedula,
+      tipo_vehiculo: v.tipoVehiculo,
+      empresa: v.empresa || 'CEDI',
+      centro_distribucion: v.centroDistribucion || 'CD BUCARAMANGA',
+      cargo: v.cargo || 'COLABORADOR',
+      soat_vencimiento: (v.soatVencimiento && v.soatVencimiento !== 'N/A') ? v.soatVencimiento : null,
+      rtm_vencimiento: (v.rtmVencimiento && v.rtmVencimiento !== 'N/A') ? v.rtmVencimiento : null,
+      licencia_categoria: v.licenciaCategoria || 'SIN CATEGORÍA',
+      licencia_vencimiento: (v.licenciaVencimiento && v.licenciaVencimiento !== 'N/A') ? v.licenciaVencimiento : null,
+      updated_at: new Date().toISOString()
+    };
+  }
 
-    // Fallback to window.INITIAL_VEHICLES if localStorage is empty
-    if (!rawList || rawList.length === 0) {
-      rawList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
-        ? JSON.parse(JSON.stringify(window.INITIAL_VEHICLES)) 
-        : [];
-    }
-
-    // STRICT RULE: Purge any vehicles that were explicitly deleted by Admin!
-    vehicles = rawList.filter(v => {
+  // --- Apply deletion filters and manual overrides to a raw list ---
+  function applyFiltersAndOverrides(rawList) {
+    let filtered = rawList.filter(v => {
       const cleanCedula = (v.cedula || '').toString().replace(/\D/g, '');
       const cleanPlaca = (v.placa || '').toString().toUpperCase().replace(/[^A-Z0-9]/g, '');
       const keyCedulaTipo = `${cleanCedula}_${v.tipoVehiculo}`;
       const keyCedulaPlaca = `${cleanCedula}_${cleanPlaca}`;
-      
-      if (deletedVehicleKeysSet.has(keyCedulaTipo) || deletedVehicleKeysSet.has(keyCedulaPlaca)) {
-        return false;
-      }
-      return true;
+      return !deletedVehicleKeysSet.has(keyCedulaTipo) && !deletedVehicleKeysSet.has(keyCedulaPlaca);
     });
 
-    // Apply any manual Admin overrides (edits to placa, SOAT, RTM, Licencia)
-    vehicles.forEach(v => {
+    filtered.forEach(v => {
       const cleanCedula = (v.cedula || '').toString().replace(/\D/g, '');
       const key = `${cleanCedula}_${v.tipoVehiculo}`;
       const ov = manualOverridesMap.get(key);
@@ -107,64 +108,136 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    return filtered;
+  }
+
+  // --- Refresh UI after data changes ---
+  function refreshUI() {
+    updateKPIs();
+    populateDropdownFilters();
+    if (typeof populateBadgeDropdownFilters === 'function') populateBadgeDropdownFilters();
+    if (typeof populateBadgeSelector === 'function') populateBadgeSelector();
+    renderDatabaseTable();
+  }
+
+  // --- INIT DATA: Local-first, then cloud in background ---
+  function initData() {
+    // Clear obsolete old caches
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('CEDI_ACTIVE_VEHICLES') && key !== STORAGE_KEY) {
+          localStorage.removeItem(key);
+        }
+      }
+      localStorage.removeItem('CEDI_VEHICLES_DATA');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V35_PERMANENT_PRINCIPAL_DB_SYNC');
+    } catch (e) {}
+
+    // STEP 1: Load local data FIRST (guarantees data is never 0)
+    let rawList = [];
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) rawList = parsed;
+      } catch (e) {}
+    }
+    if (!rawList || rawList.length === 0) {
+      rawList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
+        ? JSON.parse(JSON.stringify(window.INITIAL_VEHICLES)) 
+        : [];
+    }
+
+    // Apply filters and overrides, then save and render immediately
+    vehicles = applyFiltersAndOverrides(rawList);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(vehicles));
 
+    // STEP 2: Fetch from Supabase Cloud in background (non-blocking)
     if (supabaseClient) {
-      syncWithSupabase();
+      fetchAndSyncFromCloud();
     }
   }
 
-  async function syncWithSupabase() {
+  // --- Fetch cloud data and merge/seed as needed ---
+  async function fetchAndSyncFromCloud() {
     if (!supabaseClient) return;
     try {
-      // Upsert local active driver records to Supabase to keep cloud database synchronized with the 255 active drivers
-      const recordsToUpsert = vehicles.map(v => ({
-        id: v.id,
-        placa: v.placa,
-        nombre: v.nombre,
-        cedula: v.cedula,
-        tipo_vehiculo: v.tipoVehiculo,
-        empresa: v.empresa || 'CEDI',
-        centro_distribucion: v.centroDistribucion || 'CEDI',
-        cargo: v.cargo || 'COLABORADOR',
-        soat_vencimiento: v.soatVencimiento || null,
-        rtm_vencimiento: v.rtmVencimiento || null,
-        licencia_categoria: v.licenciaCategoria || 'B1',
-        licencia_vencimiento: v.licenciaVencimiento || null,
-        updated_at: new Date().toISOString()
-      }));
+      const { data, error } = await supabaseClient.from('vehicles').select('*');
 
-      const { error } = await supabaseClient.from('vehiculos').upsert(recordsToUpsert, { onConflict: 'placa' });
       if (error) {
-        console.error('Supabase cloud sync error:', error);
+        console.warn('⚠️ Supabase Cloud query error:', error.message);
+        return;
+      }
+
+      if (data && Array.isArray(data) && data.length > 0) {
+        // Cloud has data! Use it as the source of truth.
+        const cloudVehicles = data.map(supabaseRowToVehicle);
+        vehicles = applyFiltersAndOverrides(cloudVehicles);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(vehicles));
+        refreshUI();
+        console.log(`📡 ${vehicles.length} vehículos cargados desde Supabase Cloud.`);
       } else {
-        console.log('Supabase Cloud Database sincronizado exitosamente con los 255 activos');
+        // Cloud is empty — seed it with our local data
+        console.log('📡 Supabase Cloud está vacío. Sembrando datos automáticamente...');
+        await seedSupabaseCloud(vehicles);
       }
     } catch (e) {
-      console.error('Supabase fetch error:', e);
+      console.error('Error consultando Supabase Cloud:', e);
     }
   }
 
-  async function saveToSupabase(vehicle) {
-    if (!supabaseClient) return;
+  // --- Seed: Upload all local vehicles to empty cloud table ---
+  async function seedSupabaseCloud(seedList) {
+    if (!supabaseClient || !seedList || seedList.length === 0) return;
     try {
-      await supabaseClient.from('vehiculos').upsert({
-        id: vehicle.id,
-        placa: vehicle.placa,
-        nombre: vehicle.nombre,
-        cedula: vehicle.cedula,
-        tipo_vehiculo: vehicle.tipoVehiculo,
-        empresa: vehicle.empresa,
-        centro_distribucion: vehicle.centroDistribucion,
-        cargo: vehicle.cargo,
-        soat_vencimiento: vehicle.soatVencimiento || null,
-        rtm_vencimiento: vehicle.rtmVencimiento || null,
-        licencia_categoria: vehicle.licenciaCategoria,
-        licencia_vencimiento: vehicle.licenciaVencimiento || null,
-        updated_at: new Date().toISOString()
-      });
+      const chunkSize = 50;
+      for (let i = 0; i < seedList.length; i += chunkSize) {
+        const chunk = seedList.slice(i, i + chunkSize).map(vehicleToSupabaseRow);
+        const { error } = await supabaseClient.from('vehicles').upsert(chunk, { onConflict: 'id' });
+        if (error) console.warn('Seed chunk error:', error.message);
+      }
+      console.log(`✅ Supabase Cloud auto-poblado con ${seedList.length} vehículos.`);
     } catch (e) {
-      console.error('Error saving to Supabase:', e);
+      console.error('Error sembrando Supabase Cloud:', e);
+    }
+  }
+
+  // --- Sync ALL local vehicles to cloud (full push) ---
+  async function syncWithSupabase() {
+    if (!supabaseClient || !vehicles || vehicles.length === 0) return;
+    try {
+      const chunkSize = 50;
+      for (let i = 0; i < vehicles.length; i += chunkSize) {
+        const chunk = vehicles.slice(i, i + chunkSize).map(vehicleToSupabaseRow);
+        const { error } = await supabaseClient.from('vehicles').upsert(chunk, { onConflict: 'id' });
+        if (error) console.warn('Sync chunk error:', error.message);
+      }
+      console.log(`✅ Supabase Cloud sincronizado (${vehicles.length} vehículos).`);
+    } catch (e) {
+      console.error('Error sincronizando con Supabase Cloud:', e);
+    }
+  }
+
+  // --- Save a single vehicle to cloud ---
+  async function saveToSupabase(v) {
+    if (!supabaseClient || !v) return;
+    try {
+      const { error } = await supabaseClient.from('vehicles').upsert(vehicleToSupabaseRow(v), { onConflict: 'id' });
+      if (error) console.warn('saveToSupabase error:', error.message);
+    } catch (e) {
+      console.error('Error guardando en Supabase:', e);
+    }
+  }
+
+  // --- Delete a vehicle from cloud ---
+  async function deleteFromSupabase(vehicleId) {
+    if (!supabaseClient || !vehicleId) return;
+    try {
+      const { error } = await supabaseClient.from('vehicles').delete().eq('id', vehicleId);
+      if (error) console.warn('deleteFromSupabase error:', error.message);
+    } catch (e) {
+      console.error('Error eliminando de Supabase:', e);
     }
   }
 
@@ -1508,6 +1581,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       vehicles = vehicles.filter(v => v.id !== targetId);
       saveData();
+      deleteFromSupabase(targetId);
       closeDeleteModal();
 
       // Refresh all UI elements, KPIs, and dropdowns
@@ -1631,6 +1705,7 @@ document.addEventListener('DOMContentLoaded', () => {
         vehicles[idx] = updatedObj;
         manualOverridesMap.set(`${cedula}_${tipo}`, updatedObj);
         saveModificationsRegistry();
+        saveToSupabase(updatedObj);
       }
     } else {
       // Check if a vehicle with the exact same cedula already exists (strict deduplication)
@@ -1680,6 +1755,7 @@ document.addEventListener('DOMContentLoaded', () => {
         vehicles.unshift(newObj);
         manualOverridesMap.set(`${cedula}_${tipo}`, newObj);
         saveModificationsRegistry();
+        saveToSupabase(newObj);
         logAdminAction('CREAR', newObj, 'REGISTRO_NUEVO', 'NIN-GUNO', placa);
       }
     }
@@ -2160,10 +2236,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (saveAllChangesBtn) {
     saveAllChangesBtn.addEventListener('click', async () => {
       saveDataLocally();
+      if (typeof syncWithSupabase === 'function') {
+        await syncWithSupabase();
+      }
       if (typeof writePhysicalExcelFile === 'function') {
         await writePhysicalExcelFile();
       }
-      alert("💾 ¡Cambios guardados con éxito! La aplicación se recargará ahora para mostrar la información totalmente actualizada.");
+      alert("💾 ¡Cambios sincronizados en la Nube y guardados con éxito! La aplicación se recargará ahora.");
       window.location.reload();
     });
   }
