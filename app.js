@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V32_GATEWAY_ACCESS_MODES';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V33_PUBLIC_QR_ACCESS_MODE';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of gateway access modes
+    // Clear all obsolete old caches to force fresh load of public QR access mode
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       localStorage.removeItem('CEDI_VEHICLES_DATA');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V31_DELETE_BUTTON_ADDED');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V32_GATEWAY_ACCESS_MODES');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
@@ -635,6 +635,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('printBadgeFromVigilancia').addEventListener('click', () => {
+    if (currentUserRole !== 'ADMIN') {
+      openAdminAuthModal();
+      return;
+    }
     if (window.currentVerifiedVehicle) {
       switchTab('carnets');
       document.getElementById('badgeSelectVehicle').value = window.currentVerifiedVehicle.id;
@@ -642,11 +646,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Check URL params on load for direct scanning (e.g., ?placa=JRK763)
+  // Check URL params on load for direct QR scanning (e.g., ?placa=JRK763 or ?placa=SLB01E)
   const urlParams = new URLSearchParams(window.location.search);
   const placaParam = urlParams.get('placa');
   if (placaParam) {
-    switchTab('vigilancia');
+    setRole('VIGILANCIA');
     verifyVehicleByPlaca(placaParam.toUpperCase());
   }
 
