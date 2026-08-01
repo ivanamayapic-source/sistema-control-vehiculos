@@ -48,6 +48,12 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {}
   }
 
+  // --- Helper: Normalize strings (remove accents/diacritics and lowercase) ---
+  function removeAccents(str) {
+    if (!str) return "";
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  }
+
   // --- Helper: Convert a Supabase row to our local vehicle object format ---
   function supabaseRowToVehicle(row) {
     return {
@@ -1300,7 +1306,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   dbSearchInput.addEventListener('input', (e) => {
-    dbSearchQuery = e.target.value.trim().toLowerCase();
+    dbSearchQuery = removeAccents(e.target.value.trim());
     currentPage = 1;
     renderDatabaseTable();
   });
@@ -1385,9 +1391,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Filter by search query
       if (dbSearchQuery) {
-        const matchesPlaca = v.placa.toLowerCase().includes(dbSearchQuery);
-        const matchesNombre = v.nombre.toLowerCase().includes(dbSearchQuery);
-        const matchesCedula = v.cedula.toLowerCase().includes(dbSearchQuery);
+        const matchesPlaca = removeAccents(v.placa).includes(dbSearchQuery);
+        const matchesNombre = removeAccents(v.nombre).includes(dbSearchQuery);
+        const matchesCedula = removeAccents(v.cedula).includes(dbSearchQuery);
         if (!matchesPlaca && !matchesNombre && !matchesCedula) return false;
       }
 
