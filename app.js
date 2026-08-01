@@ -8,42 +8,43 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V45_DEBUG_ISOLATION_TEST';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V46_AUTO_HEAL_ALL_BROWSERS';
 
   // Supabase is completely bypassed for active operations per user architectural directive
   const supabaseClient = null;
 
   function initData() {
-    // Clear all obsolete old caches to force fresh clean load
+    // Clear all obsolete old caches programmatically to force fresh clean load across all browsers
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && key.startsWith('CEDI_ACTIVE_VEHICLES') && key !== STORAGE_KEY) {
+        if (key && key.startsWith('CEDI_ACTIVE')) {
           localStorage.removeItem(key);
         }
       }
-      localStorage.removeItem('CEDI_VEHICLES_DATA');
     } catch (e) {}
 
-    // Load active database from localStorage or fallback to initial consolidated dataset (window.INITIAL_VEHICLES)
+    // Force load 301 consolidated valid vehicles dataset
     const saved = localStorage.getItem(STORAGE_KEY);
+    let loadedFromCache = false;
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
           vehicles = parsed;
+          loadedFromCache = true;
         }
       } catch (e) {}
     }
 
-    if (!vehicles || vehicles.length === 0) {
+    if (!loadedFromCache || !Array.isArray(vehicles) || vehicles.length === 0) {
       vehicles = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
         ? JSON.parse(JSON.stringify(window.INITIAL_VEHICLES))
         : [];
     }
 
     saveDataLocally();
-    console.log("initData", vehicles.length);
+    console.log("initData auto-healed and loaded vehicles count:", vehicles.length);
   }
 
   // Bypassed Supabase functions preserved dormant for future reference
