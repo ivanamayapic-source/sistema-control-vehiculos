@@ -8,11 +8,30 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V42_FULL_SUPABASE_AUTOSEED';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V43_VITE_COMPATIBLE_ENV';
+
+  // Environment Variable Resolver for Vite, Vercel, Node, Window & LocalStorage
+  const getEnv = (key) => {
+    try {
+      if (typeof import.meta !== 'undefined' && import.meta && import.meta.env && import.meta.env[key]) {
+        return import.meta.env[key];
+      }
+    } catch (e) {}
+    try {
+      if (typeof process !== 'undefined' && process && process.env && process.env[key]) {
+        return process.env[key];
+      }
+    } catch (e) {}
+    if (typeof window !== 'undefined') {
+      if (window[key]) return window[key];
+      if (window.ENV && window.ENV[key]) return window.ENV[key];
+    }
+    return '';
+  };
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
-  const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
-  const SUPABASE_KEY = window.SUPABASE_KEY || localStorage.getItem('SUPABASE_KEY') || '';
+  const SUPABASE_URL = getEnv('VITE_SUPABASE_URL') || getEnv('SUPABASE_URL') || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
+  const SUPABASE_KEY = getEnv('VITE_SUPABASE_ANON_KEY') || getEnv('SUPABASE_ANON_KEY') || getEnv('SUPABASE_KEY') || localStorage.getItem('SUPABASE_KEY') || '';
   let supabaseClient = null;
 
   if (window.supabase && SUPABASE_URL && SUPABASE_KEY) {
