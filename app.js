@@ -2126,20 +2126,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Add tabs.logs definition to switchTab
-  tabs.logs = document.getElementById('tab-logs');
-  views.logs = document.getElementById('view-logs');
-  if (tabs.logs) {
-    tabs.logs.addEventListener('click', () => {
-      if (typeof requestAdminAccess === 'function') {
-        requestAdminAccess('logs');
-      } else {
-        switchTab('logs');
-      }
-      renderAuditLogsTable();
-    });
-  }
-
   // Initial render - Load vehicles data first!
   initData();
   updateKPIs();
@@ -2147,5 +2133,4 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof populateBadgeDropdownFilters === 'function') populateBadgeDropdownFilters();
   if (typeof populateBadgeSelector === 'function') populateBadgeSelector();
   renderDatabaseTable();
-  renderAuditLogsTable();
 });
