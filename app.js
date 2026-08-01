@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V34_SYNC_AND_AUDIT_LOGS';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V35_PERMANENT_PRINCIPAL_DB_SYNC';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of sync & audit logs features
+    // Clear all obsolete old caches to force fresh load of principal DB sync features
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       localStorage.removeItem('CEDI_VEHICLES_DATA');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V33_PUBLIC_QR_ACCESS_MODE');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V34_SYNC_AND_AUDIT_LOGS');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
@@ -1410,6 +1410,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (typeof populateBadgeDropdownFilters === 'function') populateBadgeDropdownFilters();
       if (typeof populateBadgeSelector === 'function') populateBadgeSelector();
       renderDatabaseTable();
+      alert("✅ El registro fue eliminado correctamente de la aplicación y sincronizado con la base de datos principal.");
     });
   }
 
@@ -1571,7 +1572,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     saveData();
     editModal.classList.add('hidden');
-    alert("¡Información guardada exitosamente y sincronizada!");
+    alert("✅ Los cambios fueron guardados correctamente en la aplicación y sincronizados con la base de datos principal.");
   });
 
   // --------------------------------------------------------------------------
