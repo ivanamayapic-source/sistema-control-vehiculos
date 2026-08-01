@@ -538,6 +538,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (adminAuthError) adminAuthError.classList.add('hidden');
     if (adminUser) adminUser.value = '';
     if (adminPass) adminPass.value = '';
+    
+    if (viewLandingGateway) {
+      viewLandingGateway.classList.add('hidden');
+      viewLandingGateway.style.display = 'none';
+    }
+
     if (adminAuthModal) {
       adminAuthModal.classList.remove('hidden');
       adminAuthModal.style.display = 'flex';
@@ -552,6 +558,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (adminAuthModal) {
       adminAuthModal.classList.add('hidden');
       adminAuthModal.style.display = 'none';
+    }
+    if (!currentUserRole && viewLandingGateway) {
+      viewLandingGateway.classList.remove('hidden');
+      viewLandingGateway.style.display = 'flex';
     }
   }
 
