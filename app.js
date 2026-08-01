@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V38_SMART_SYNC_IMPORT';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V39_DYNAMIC_SUPABASE_FILTERS';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -842,27 +842,28 @@ document.addEventListener('DOMContentLoaded', () => {
   function populateBadgeDropdownFilters() {
     if (!badgeCdFilter || !badgeEmpresaFilter) return;
 
-    const cds = [...new Set(vehicles.map(v => (v.centroDistribucion || 'CEDI').trim()))].sort();
-    const empresas = [...new Set(vehicles.map(v => (v.empresa || 'CEDI').trim()))].sort();
+    const currentSelectedCd = badgeCdFilter.value || 'ALL';
+    const currentSelectedEmp = badgeEmpresaFilter.value || 'ALL';
+
+    const cds = Array.from(new Set(vehicles.map(v => (v.centroDistribucion || '').toString().trim()))).filter(x => x && x !== '0' && x !== 'N/A' && x !== 'NO APLICA').sort();
+    const empresas = Array.from(new Set(vehicles.map(v => (v.empresa || '').toString().trim()))).filter(x => x && x !== '0' && x !== 'N/A' && x !== 'NO APLICA').sort();
 
     badgeCdFilter.innerHTML = '<option value="ALL">🏢 Todos los CD</option>';
     cds.forEach(cd => {
-      if (cd) {
-        const opt = document.createElement('option');
-        opt.value = cd;
-        opt.textContent = `🏢 CD: ${cd}`;
-        badgeCdFilter.appendChild(opt);
-      }
+      const opt = document.createElement('option');
+      opt.value = cd;
+      opt.textContent = `🏢 CD: ${cd}`;
+      if (cd === currentSelectedCd) opt.selected = true;
+      badgeCdFilter.appendChild(opt);
     });
 
     badgeEmpresaFilter.innerHTML = '<option value="ALL">🏭 Todas las Empresas</option>';
     empresas.forEach(emp => {
-      if (emp) {
-        const opt = document.createElement('option');
-        opt.value = emp;
-        opt.textContent = `🏭 ${emp}`;
-        badgeEmpresaFilter.appendChild(opt);
-      }
+      const opt = document.createElement('option');
+      opt.value = emp;
+      opt.textContent = `🏭 ${emp}`;
+      if (emp === currentSelectedEmp) opt.selected = true;
+      badgeEmpresaFilter.appendChild(opt);
     });
   }
 
@@ -1258,36 +1259,55 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function populateDropdownFilters() {
-    if (!dbCdFilter || !dbEmpresaFilter || !dbLicenciaFilter) return;
+    if (!dbCdFilter || !dbEmpresaFilter || !dbLicenciaFilter || !dbTipoFilter) return;
 
-    // CD options
-    const cds = Array.from(new Set(vehicles.map(v => v.centroDistribucion || 'CEDI'))).filter(Boolean).sort();
+    const currentSelectedCd = dbCdFilter.value || currentCdFilter || 'ALL';
+    const currentSelectedEmp = dbEmpresaFilter.value || currentEmpresaFilter || 'ALL';
+    const currentSelectedLic = dbLicenciaFilter.value || currentLicenciaFilter || 'ALL';
+    const currentSelectedTipo = dbTipoFilter.value || currentTipoFilter || 'ALL';
+
+    // 1. CD options (Col X)
+    const cds = Array.from(new Set(vehicles.map(v => (v.centroDistribucion || '').toString().trim()))).filter(x => x && x !== '0' && x !== 'N/A' && x !== 'NO APLICA').sort();
     dbCdFilter.innerHTML = '<option value="ALL">🏢 Todos los CD (Col. X)</option>';
     cds.forEach(cd => {
       const opt = document.createElement('option');
       opt.value = cd;
       opt.textContent = cd;
+      if (cd === currentSelectedCd) opt.selected = true;
       dbCdFilter.appendChild(opt);
     });
 
-    // Empresa options
-    const empresas = Array.from(new Set(vehicles.map(v => v.empresa || 'CEDI'))).filter(Boolean).sort();
+    // 2. Empresa options (Col U)
+    const empresas = Array.from(new Set(vehicles.map(v => (v.empresa || '').toString().trim()))).filter(x => x && x !== '0' && x !== 'N/A' && x !== 'NO APLICA').sort();
     dbEmpresaFilter.innerHTML = '<option value="ALL">🏭 Todas las Empresas (Col. U)</option>';
     empresas.forEach(emp => {
       const opt = document.createElement('option');
       opt.value = emp;
       opt.textContent = emp;
+      if (emp === currentSelectedEmp) opt.selected = true;
       dbEmpresaFilter.appendChild(opt);
     });
 
-    // Licencia options
-    const licencias = Array.from(new Set(vehicles.map(v => v.licenciaCategoria || 'SIN CATEGORÍA'))).filter(Boolean).sort();
-    dbLicenciaFilter.innerHTML = '<option value="ALL">🪪 Todas las Licencias (Col. AP)</option>';
+    // 3. Licencia options (Col AP/AV)
+    const licencias = Array.from(new Set(vehicles.map(v => (v.licenciaCategoria || '').toString().trim()))).filter(x => x && x !== '0' && x !== 'N/A' && x !== 'NO APLICA').sort();
+    dbLicenciaFilter.innerHTML = '<option value="ALL">🪪 Todas las Licencias (Col. AP/AV)</option>';
     licencias.forEach(lic => {
       const opt = document.createElement('option');
       opt.value = lic;
       opt.textContent = `Cat: ${lic}`;
+      if (lic === currentSelectedLic) opt.selected = true;
       dbLicenciaFilter.appendChild(opt);
+    });
+
+    // 4. Tipo de Vehículo options
+    const tipos = Array.from(new Set(vehicles.map(v => (v.tipoVehiculo || '').toString().trim()))).filter(Boolean).sort();
+    dbTipoFilter.innerHTML = '<option value="ALL">🛵🚗 Todos los Tipos</option>';
+    tipos.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t;
+      opt.textContent = t;
+      if (t === currentSelectedTipo) opt.selected = true;
+      dbTipoFilter.appendChild(opt);
     });
   }
 
