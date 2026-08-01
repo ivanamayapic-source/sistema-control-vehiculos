@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V40_FIX_DROPDOWN_DOM_RACE';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V41_RESTORE_FULL_DATASET';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -43,20 +43,26 @@ document.addEventListener('DOMContentLoaded', () => {
       loadedFromSupabase = await fetchVehiclesFromSupabase();
     }
 
-    if (!loadedFromSupabase) {
-      // Fallback to local storage or initial dataset if Supabase is offline
+    if (!loadedFromSupabase || !Array.isArray(vehicles) || vehicles.length === 0) {
+      // Always fallback to initial dataset if storage or Supabase returns 0 vehicles
       const saved = localStorage.getItem(STORAGE_KEY);
+      let parsed = null;
       if (saved) {
         try {
-          vehicles = JSON.parse(saved);
-        } catch (e) {
-          vehicles = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) ? window.INITIAL_VEHICLES : [];
-        }
-      } else {
-        vehicles = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) ? window.INITIAL_VEHICLES : [];
+          parsed = JSON.parse(saved);
+        } catch (e) {}
       }
+
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        vehicles = parsed;
+      } else if (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) {
+        vehicles = window.INITIAL_VEHICLES;
+      } else {
+        vehicles = [];
+      }
+
       saveDataLocally();
-      if (supabaseClient) {
+      if (supabaseClient && vehicles.length > 0) {
         syncWithSupabase();
       }
     }
