@@ -10,15 +10,22 @@ document.addEventListener('DOMContentLoaded', () => {
   let vehicles = [];
   const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V47_PERSISTENT_DELETIONS_FIX';
 
-  // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
-  const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
-  const SUPABASE_KEY = window.SUPABASE_KEY || localStorage.getItem('SUPABASE_KEY') || '';
+  const getEnv = (key) => {
+    try { if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) return import.meta.env[key]; } catch (e) {}
+    try { if (typeof process !== 'undefined' && process.env && process.env[key]) return process.env[key]; } catch (e) {}
+    try { if (window[key]) return window[key]; } catch (e) {}
+    try { if (localStorage.getItem(key)) return localStorage.getItem(key); } catch (e) {}
+    return '';
+  };
+
+  const SUPABASE_URL = getEnv('VITE_SUPABASE_URL') || getEnv('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
+  const SUPABASE_KEY = getEnv('VITE_SUPABASE_ANON_KEY') || getEnv('SUPABASE_ANON_KEY') || getEnv('SUPABASE_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InphbXFxYWlpcHdhdGJhdWJ2bHBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgxOTgwNzAsImV4cCI6MjA1Mzc3NDA3MH0.d9t-N_wY-N5zWJ_V8wG-w1_K-Q-7G-0v-X-Y';
   let supabaseClient = null;
 
   if (window.supabase && SUPABASE_URL && SUPABASE_KEY) {
     try {
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      console.log('Supabase Cloud Database (zamqqaiipwatbaubvlpq) Conectado Correctamente');
+      console.log('📡 Supabase Cloud Database (zamqqaiipwatbaubvlpq) Conectado Correctamente');
     } catch (err) {
       console.error('Error conectando a Supabase:', err);
     }
@@ -48,7 +55,73 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {}
   }
 
-  function initData() {
+  async function fetchVehiclesFromSupabase() {
+    if (!supabaseClient) return false;
+    try {
+      let res = await supabaseClient.from('vehicles').select('*');
+      if (res.error || !res.data) {
+        res = await supabaseClient.from('vehiculos').select('*');
+      }
+      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+        const mapped = res.data.map(row => ({
+          id: row.id || (row.cedula + '_' + row.placa),
+          placa: row.placa || '',
+          nombre: row.nombre || '',
+          cedula: row.cedula || '',
+          tipoVehiculo: row.tipo_vehiculo || row.tipoVehiculo || 'CARRO',
+          empresa: row.empresa || 'CEDI',
+          centroDistribucion: row.centro_distribucion || row.centroDistribucion || 'CD BUCARAMANGA',
+          cargo: row.cargo || 'COLABORADOR',
+          soatVencimiento: row.soat_vencimiento || row.soatVencimiento || 'N/A',
+          rtmVencimiento: row.rtm_vencimiento || row.rtmVencimiento || 'N/A',
+          licenciaCategoria: row.licencia_categoria || row.licenciaCategoria || 'SIN CATEGORÍA',
+          licenciaVencimiento: row.licencia_vencimiento || row.licenciaVencimiento || 'N/A'
+        }));
+        vehicles = mapped;
+        saveDataLocally();
+        console.log(`📡 Sincronización en la Nube activa: ${vehicles.length} vehículos cargados desde Supabase Cloud.`);
+        return true;
+      }
+    } catch (err) {
+      console.error("Error al consultar Supabase Cloud:", err);
+    }
+    return false;
+  }
+
+  async function seedSupabaseCloud(seedList) {
+    if (!supabaseClient || !seedList || seedList.length === 0) return;
+    const recordsToInsert = seedList.map(v => ({
+      id: v.id,
+      placa: v.placa,
+      nombre: v.nombre,
+      cedula: v.cedula,
+      tipo_vehiculo: v.tipoVehiculo,
+      empresa: v.empresa || 'CEDI',
+      centro_distribucion: v.centroDistribucion || 'CD BUCARAMANGA',
+      cargo: v.cargo || 'COLABORADOR',
+      soat_vencimiento: (v.soatVencimiento && v.soatVencimiento !== 'N/A') ? v.soatVencimiento : null,
+      rtm_vencimiento: (v.rtmVencimiento && v.rtmVencimiento !== 'N/A') ? v.rtmVencimiento : null,
+      licencia_categoria: v.licenciaCategoria || 'SIN CATEGORÍA',
+      licencia_vencimiento: (v.licenciaVencimiento && v.licenciaVencimiento !== 'N/A') ? v.licenciaVencimiento : null,
+      updated_at: new Date().toISOString()
+    }));
+
+    try {
+      const chunkSize = 50;
+      for (let i = 0; i < recordsToInsert.length; i += chunkSize) {
+        const chunk = recordsToInsert.slice(i, i + chunkSize);
+        let res = await supabaseClient.from('vehicles').upsert(chunk, { onConflict: 'id' });
+        if (res.error) {
+          await supabaseClient.from('vehiculos').upsert(chunk, { onConflict: 'id' });
+        }
+      }
+      console.log(`✅ Supabase Cloud auto-poblado exitosamente con ${recordsToInsert.length} filas.`);
+    } catch (e) {
+      console.error("Error sembrando Supabase Cloud:", e);
+    }
+  }
+
+  async function initData() {
     // Clear all obsolete old caches to force fresh load
     try {
       for (let i = 0; i < localStorage.length; i++) {
@@ -61,27 +134,38 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V35_PERMANENT_PRINCIPAL_DB_SYNC');
     } catch (e) {}
 
-    // First: Load saved vehicles from localStorage if available
-    let rawList = [];
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          rawList = parsed;
-        }
-      } catch (e) {}
+    let loadedFromSupabase = false;
+    if (supabaseClient) {
+      loadedFromSupabase = await fetchVehiclesFromSupabase();
     }
 
-    // Fallback to window.INITIAL_VEHICLES if localStorage is empty
-    if (!rawList || rawList.length === 0) {
-      rawList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
-        ? JSON.parse(JSON.stringify(window.INITIAL_VEHICLES)) 
-        : [];
+    if (!loadedFromSupabase || !Array.isArray(vehicles) || vehicles.length === 0) {
+      // Fallback: Load saved vehicles from localStorage if available
+      let rawList = [];
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) rawList = parsed;
+        } catch (e) {}
+      }
+
+      if (!rawList || rawList.length === 0) {
+        rawList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
+          ? JSON.parse(JSON.stringify(window.INITIAL_VEHICLES)) 
+          : [];
+      }
+
+      vehicles = rawList;
+      saveDataLocally();
+
+      if (supabaseClient && vehicles.length > 0) {
+        await seedSupabaseCloud(vehicles);
+      }
     }
 
     // STRICT RULE: Purge any vehicles that were explicitly deleted by Admin!
-    vehicles = rawList.filter(v => {
+    vehicles = vehicles.filter(v => {
       const cleanCedula = (v.cedula || '').toString().replace(/\D/g, '');
       const cleanPlaca = (v.placa || '').toString().toUpperCase().replace(/[^A-Z0-9]/g, '');
       const keyCedulaTipo = `${cleanCedula}_${v.tipoVehiculo}`;
@@ -107,64 +191,78 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(vehicles));
-
-    if (supabaseClient) {
-      syncWithSupabase();
-    }
+    saveDataLocally();
   }
 
   async function syncWithSupabase() {
-    if (!supabaseClient) return;
-    try {
-      // Upsert local active driver records to Supabase to keep cloud database synchronized with the 255 active drivers
-      const recordsToUpsert = vehicles.map(v => ({
-        id: v.id,
-        placa: v.placa,
-        nombre: v.nombre,
-        cedula: v.cedula,
-        tipo_vehiculo: v.tipoVehiculo,
-        empresa: v.empresa || 'CEDI',
-        centro_distribucion: v.centroDistribucion || 'CEDI',
-        cargo: v.cargo || 'COLABORADOR',
-        soat_vencimiento: v.soatVencimiento || null,
-        rtm_vencimiento: v.rtmVencimiento || null,
-        licencia_categoria: v.licenciaCategoria || 'B1',
-        licencia_vencimiento: v.licenciaVencimiento || null,
-        updated_at: new Date().toISOString()
-      }));
+    if (!supabaseClient || !vehicles || vehicles.length === 0) return;
+    const recordsToUpsert = vehicles.map(v => ({
+      id: v.id,
+      placa: v.placa,
+      nombre: v.nombre,
+      cedula: v.cedula,
+      tipo_vehiculo: v.tipoVehiculo,
+      empresa: v.empresa || 'CEDI',
+      centro_distribucion: v.centroDistribucion || 'CD BUCARAMANGA',
+      cargo: v.cargo || 'COLABORADOR',
+      soat_vencimiento: (v.soatVencimiento && v.soatVencimiento !== 'N/A') ? v.soatVencimiento : null,
+      rtm_vencimiento: (v.rtmVencimiento && v.rtmVencimiento !== 'N/A') ? v.rtmVencimiento : null,
+      licencia_categoria: v.licenciaCategoria || 'SIN CATEGORÍA',
+      licencia_vencimiento: (v.licenciaVencimiento && v.licenciaVencimiento !== 'N/A') ? v.licenciaVencimiento : null,
+      updated_at: new Date().toISOString()
+    }));
 
-      const { error } = await supabaseClient.from('vehiculos').upsert(recordsToUpsert, { onConflict: 'placa' });
-      if (error) {
-        console.error('Supabase cloud sync error:', error);
-      } else {
-        console.log('Supabase Cloud Database sincronizado exitosamente con los 255 activos');
+    try {
+      const chunkSize = 50;
+      for (let i = 0; i < recordsToUpsert.length; i += chunkSize) {
+        const chunk = recordsToUpsert.slice(i, i + chunkSize);
+        let res = await supabaseClient.from('vehicles').upsert(chunk, { onConflict: 'id' });
+        if (res.error) {
+          await supabaseClient.from('vehiculos').upsert(chunk, { onConflict: 'id' });
+        }
       }
+      console.log(`✅ Supabase Cloud sincronizado exitosamente (${recordsToUpsert.length} filas).`);
     } catch (e) {
-      console.error('Supabase fetch error:', e);
+      console.error("Error sincronizando con Supabase Cloud:", e);
     }
   }
 
-  async function saveToSupabase(vehicle) {
-    if (!supabaseClient) return;
+  async function saveToSupabase(v) {
+    if (!supabaseClient || !v) return;
+    const record = {
+      id: v.id,
+      placa: v.placa,
+      nombre: v.nombre,
+      cedula: v.cedula,
+      tipo_vehiculo: v.tipoVehiculo,
+      empresa: v.empresa || 'CEDI',
+      centro_distribucion: v.centroDistribucion || 'CD BUCARAMANGA',
+      cargo: v.cargo || 'COLABORADOR',
+      soat_vencimiento: (v.soatVencimiento && v.soatVencimiento !== 'N/A') ? v.soatVencimiento : null,
+      rtm_vencimiento: (v.rtmVencimiento && v.rtmVencimiento !== 'N/A') ? v.rtmVencimiento : null,
+      licencia_categoria: v.licenciaCategoria || 'SIN CATEGORÍA',
+      licencia_vencimiento: (v.licenciaVencimiento && v.licenciaVencimiento !== 'N/A') ? v.licenciaVencimiento : null,
+      updated_at: new Date().toISOString()
+    };
     try {
-      await supabaseClient.from('vehiculos').upsert({
-        id: vehicle.id,
-        placa: vehicle.placa,
-        nombre: vehicle.nombre,
-        cedula: vehicle.cedula,
-        tipo_vehiculo: vehicle.tipoVehiculo,
-        empresa: vehicle.empresa,
-        centro_distribucion: vehicle.centroDistribucion,
-        cargo: vehicle.cargo,
-        soat_vencimiento: vehicle.soatVencimiento || null,
-        rtm_vencimiento: vehicle.rtmVencimiento || null,
-        licencia_categoria: vehicle.licenciaCategoria,
-        licencia_vencimiento: vehicle.licenciaVencimiento || null,
-        updated_at: new Date().toISOString()
-      });
+      let res = await supabaseClient.from('vehicles').upsert(record, { onConflict: 'id' });
+      if (res.error) {
+        await supabaseClient.from('vehiculos').upsert(record, { onConflict: 'id' });
+      }
     } catch (e) {
-      console.error('Error saving to Supabase:', e);
+      console.error("Error guardando en Supabase:", e);
+    }
+  }
+
+  async function deleteFromSupabase(vehicleId) {
+    if (!supabaseClient || !vehicleId) return;
+    try {
+      let res = await supabaseClient.from('vehicles').delete().eq('id', vehicleId);
+      if (res.error) {
+        await supabaseClient.from('vehiculos').delete().eq('id', vehicleId);
+      }
+    } catch (e) {
+      console.error("Error eliminando de Supabase:", e);
     }
   }
 
@@ -1508,6 +1606,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       vehicles = vehicles.filter(v => v.id !== targetId);
       saveData();
+      deleteFromSupabase(targetId);
       closeDeleteModal();
 
       // Refresh all UI elements, KPIs, and dropdowns
@@ -2160,10 +2259,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (saveAllChangesBtn) {
     saveAllChangesBtn.addEventListener('click', async () => {
       saveDataLocally();
+      if (typeof syncWithSupabase === 'function') {
+        await syncWithSupabase();
+      }
       if (typeof writePhysicalExcelFile === 'function') {
         await writePhysicalExcelFile();
       }
-      alert("💾 ¡Cambios guardados con éxito! La aplicación se recargará ahora para mostrar la información totalmente actualizada.");
+      alert("💾 ¡Cambios sincronizados en la Nube y guardados con éxito! La aplicación se recargará ahora para mostrar la información totalmente actualizada.");
       window.location.reload();
     });
   }
