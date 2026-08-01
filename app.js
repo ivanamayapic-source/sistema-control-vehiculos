@@ -501,27 +501,31 @@ document.addEventListener('DOMContentLoaded', () => {
         btnHeaderRoleSwitch.innerHTML = `<i class="fa-solid fa-user-shield text-sky-400"></i> <span>Modo Administrador</span> <span class="bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded font-extrabold ml-1">Salir Admin</span>`;
       }
       document.querySelectorAll('.admin-lock-icon').forEach(el => el.classList.add('hidden'));
+      switchTab('database');
     }
     if (viewLandingGateway) viewLandingGateway.classList.add('hidden');
-    if (adminAuthModal) adminAuthModal.classList.add('hidden');
+    closeAdminAuthModal();
   }
 
   // Option 1: Control de Vigilancia (QR) - Direct Access (No Password Required)
   if (btnSelectVigilancia) {
-    btnSelectVigilancia.addEventListener('click', () => {
+    btnSelectVigilancia.addEventListener('click', (e) => {
+      e.preventDefault();
       setRole('VIGILANCIA');
     });
   }
 
   // Option 2: Administración - Requires Auth
   if (btnSelectAdmin) {
-    btnSelectAdmin.addEventListener('click', () => {
+    btnSelectAdmin.addEventListener('click', (e) => {
+      e.preventDefault();
       openAdminAuthModal();
     });
   }
 
   if (btnHeaderRoleSwitch) {
-    btnHeaderRoleSwitch.addEventListener('click', () => {
+    btnHeaderRoleSwitch.addEventListener('click', (e) => {
+      e.preventDefault();
       if (currentUserRole === 'ADMIN') {
         setRole('VIGILANCIA');
       } else {
@@ -536,7 +540,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (adminPass) adminPass.value = '';
     if (adminAuthModal) {
       adminAuthModal.classList.remove('hidden');
-      adminAuthModal.style.zIndex = '99999';
+      adminAuthModal.style.display = 'flex';
+      adminAuthModal.style.zIndex = '999999';
     }
     setTimeout(() => {
       if (adminUser) adminUser.focus();
@@ -544,7 +549,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function closeAdminAuthModal() {
-    if (adminAuthModal) adminAuthModal.classList.add('hidden');
+    if (adminAuthModal) {
+      adminAuthModal.classList.add('hidden');
+      adminAuthModal.style.display = 'none';
+    }
   }
 
   if (closeAdminAuthBtn) closeAdminAuthBtn.addEventListener('click', closeAdminAuthModal);
