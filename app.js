@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V28_FUZZY_TYPO_CONSOLIDATED';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V29_COLOMBIAN_PLATE_PATTERN';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of fuzzy typo consolidated dataset
+    // Clear all obsolete old caches to force fresh load of pattern validated dataset
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       localStorage.removeItem('CEDI_VEHICLES_DATA');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V27_PLATE_NORMALIZED');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V28_FUZZY_TYPO_CONSOLIDATED');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
@@ -1482,6 +1482,24 @@ document.addEventListener('DOMContentLoaded', () => {
           return false;
         };
 
+        const isValidColombianPlate = (p) => {
+          if (!p) return false;
+          const clean = p.replace(/[^A-Z0-9]/g, '').toUpperCase();
+          if (!clean) return false;
+          const blacklisted = ['EVOBIKE', 'NAELCTRICA', 'NAELECTRICA', 'BICICLETA', 'ELECTRICA', 'PATINETA', 'NOAPLICA', 'NINGUNO', 'NOTIENEN', 'NOTIENE', 'XXXXX', 'VVV', 'MOTO', 'CARRO', 'SINPLACA'];
+          if (blacklisted.includes(clean)) return false;
+          if (clean.length < 5 || clean.length > 7) return false;
+          // Motorcycle: 3 letters + 2 digits + 1 letter (PIY57E, GJT57F, SLB01E)
+          if (/^[A-Z]{3}[0-9]{2}[A-Z]$/.test(clean)) return true;
+          // Car: 3 letters + 3 digits (MCN707, FCY607)
+          if (/^[A-Z]{3}[0-9]{3}$/.test(clean)) return true;
+          // Older Motorcycle: 3 letters + 2 digits
+          if (/^[A-Z]{3}[0-9]{2}$/.test(clean)) return true;
+          // Official / Public: 2 letters + 4 digits
+          if (/^[A-Z]{2}[0-9]{4}$/.test(clean)) return true;
+          return false;
+        };
+
         rowsByCedulaMap.forEach((list, cleanCedula) => {
           // Sort from newest to oldest by Col B Hora de inicio
           list.sort((a, b) => b.numTime - a.numTime);
@@ -1546,15 +1564,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
           targetVehicles.forEach((tv) => {
             const cleanPlaca = placaBase.replace(/[^A-Z0-9]/g, '');
-            let displayPlaca = cleanPlaca;
-            if (!cleanPlaca || cleanPlaca === '0' || cleanPlaca === 'NOAPLICA' || cleanPlaca === 'VVV' || cleanPlaca === 'NA') {
-              displayPlaca = `CC-${cleanCedula}-${tv.tipoVehiculo}`;
-            }
+            const isValidPlate = isValidColombianPlate(placaBase);
 
-            // Check if another vehicle for this collaborator matches or is fuzzy similar
+            // Check if another vehicle for this collaborator matches or if non-valid plate consolidate into single review record
             let existingKey = null;
             for (const [key, existingRecord] of dedupedRecordsMap.entries()) {
               if (existingRecord.cedula === cleanCedula && existingRecord.tipoVehiculo === tv.tipoVehiculo) {
+                if (existingRecord.requiereRevision || !isValidPlate) {
+                  existingKey = key;
+                  break;
+                }
                 const existingClean = existingRecord.placa.replace(/[^A-Z0-9]/g, '');
                 if (isSimilarPlaca(existingClean, cleanPlaca)) {
                   existingKey = key;
@@ -1566,6 +1585,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (existingKey) {
               duplicatesFiltered++;
               return;
+            }
+
+            let displayPlaca = cleanPlaca;
+            let requiereRevision = false;
+            let motivoValidacion = 'OK';
+
+            if (isValidPlate) {
+              displayPlaca = cleanPlaca;
+            } else {
+              requiereRevision = true;
+              motivoValidacion = 'La placa registrada no tiene un formato válido de placa colombiana';
+              displayPlaca = (cleanPlaca && cleanPlaca.length >= 4) ? cleanPlaca : `CC-${cleanCedula}-${tv.tipoVehiculo}`;
             }
 
             const dedupKey = `${cleanCedula}_${tv.tipoVehiculo}_${displayPlaca}`;
@@ -1581,7 +1612,9 @@ document.addEventListener('DOMContentLoaded', () => {
               soatVencimiento: (rawSoat && rawSoat !== 'N/A') ? rawSoat : 'N/A',
               rtmVencimiento: (rawRtm && rawRtm !== 'N/A') ? rawRtm : 'N/A',
               licenciaCategoria: tv.licCat,
-              licenciaVencimiento: tv.licVenc
+              licenciaVencimiento: tv.licVenc,
+              requiereRevision,
+              motivoValidacion
             });
           });
         });
