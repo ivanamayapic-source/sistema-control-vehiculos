@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V41_RESTORE_FULL_DATASET';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V42_FULL_SUPABASE_AUTOSEED';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -34,37 +34,101 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       localStorage.removeItem('CEDI_VEHICLES_DATA');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V35_PERMANENT_PRINCIPAL_DB_SYNC');
     } catch (e) {}
 
-    // First: Load from Supabase Cloud as Primary Official Database Source
-    let loadedFromSupabase = false;
-    if (supabaseClient) {
-      loadedFromSupabase = await fetchVehiclesFromSupabase();
+    if (!supabaseClient) {
+      // Offline fallback
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try { vehicles = JSON.parse(saved); } catch (e) {}
+      }
+      if (!vehicles || vehicles.length === 0) {
+        vehicles = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) ? window.INITIAL_VEHICLES : [];
+      }
+      saveDataLocally();
+      return;
     }
 
-    if (!loadedFromSupabase || !Array.isArray(vehicles) || vehicles.length === 0) {
-      // Always fallback to initial dataset if storage or Supabase returns 0 vehicles
-      const saved = localStorage.getItem(STORAGE_KEY);
-      let parsed = null;
-      if (saved) {
-        try {
-          parsed = JSON.parse(saved);
-        } catch (e) {}
+    try {
+      // 1. Check COUNT(*) on Supabase Cloud table 'vehicles'
+      let countRes = await supabaseClient.from('vehicles').select('id', { count: 'exact', head: true });
+      let tableName = 'vehicles';
+      
+      if (countRes.error) {
+        countRes = await supabaseClient.from('vehiculos').select('id', { count: 'exact', head: true });
+        tableName = 'vehiculos';
       }
 
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        vehicles = parsed;
-      } else if (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) {
-        vehicles = window.INITIAL_VEHICLES;
+      const rowCount = (countRes && typeof countRes.count === 'number') ? countRes.count : 0;
+
+      if (rowCount > 0) {
+        // CASE 1: Supabase already has records! Read directly from Supabase Cloud as single source of truth.
+        console.log(`📡 Supabase Cloud (${tableName}) contiene ${rowCount} filas. Leyendo exclusivamente de Supabase Cloud...`);
+        const loaded = await fetchVehiclesFromSupabase();
+        if (!loaded || vehicles.length === 0) {
+          // Backup fallback from localStorage cache if network fails
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            try { vehicles = JSON.parse(saved); } catch (e) {}
+          }
+        }
       } else {
-        vehicles = [];
+        // CASE 2: Supabase is empty (0 records)! AUTO-INITIALIZE / AUTO-SEED SUPABASE CLOUD ONCE!
+        console.log("⚡ Supabase Cloud está vacío (0 filas). Autopoblando la base de datos con los 301 vehículos semilla...");
+        const seedData = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
+          ? window.INITIAL_VEHICLES 
+          : [];
+        
+        if (seedData.length > 0) {
+          vehicles = seedData;
+          saveDataLocally();
+          await seedSupabaseCloud(seedData);
+          await fetchVehiclesFromSupabase();
+        }
       }
-
+    } catch (err) {
+      console.warn("⚠️ Error durante la comprobación de Supabase Cloud:", err);
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try { vehicles = JSON.parse(saved); } catch (e) {}
+      }
+      if (!vehicles || vehicles.length === 0) {
+        vehicles = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) ? window.INITIAL_VEHICLES : [];
+      }
       saveDataLocally();
-      if (supabaseClient && vehicles.length > 0) {
-        syncWithSupabase();
+    }
+  }
+
+  async function seedSupabaseCloud(seedList) {
+    if (!supabaseClient || !seedList || seedList.length === 0) return;
+    const recordsToInsert = seedList.map(v => ({
+      id: v.id,
+      placa: v.placa,
+      nombre: v.nombre,
+      cedula: v.cedula,
+      tipo_vehiculo: v.tipoVehiculo,
+      empresa: v.empresa || 'CEDI',
+      centro_distribucion: v.centroDistribucion || 'CD BUCARAMANGA',
+      cargo: v.cargo || 'COLABORADOR',
+      soat_vencimiento: (v.soatVencimiento && v.soatVencimiento !== 'N/A') ? v.soatVencimiento : null,
+      rtm_vencimiento: (v.rtmVencimiento && v.rtmVencimiento !== 'N/A') ? v.rtmVencimiento : null,
+      licencia_categoria: v.licenciaCategoria || 'SIN CATEGORÍA',
+      licencia_vencimiento: (v.licenciaVencimiento && v.licenciaVencimiento !== 'N/A') ? v.licenciaVencimiento : null,
+      updated_at: new Date().toISOString()
+    }));
+
+    try {
+      const chunkSize = 50;
+      for (let i = 0; i < recordsToInsert.length; i += chunkSize) {
+        const chunk = recordsToInsert.slice(i, i + chunkSize);
+        let res = await supabaseClient.from('vehicles').upsert(chunk, { onConflict: 'id' });
+        if (res.error) {
+          await supabaseClient.from('vehiculos').upsert(chunk, { onConflict: 'id' });
+        }
       }
+      console.log(`✅ Supabase Cloud auto-poblado exitosamente con ${recordsToInsert.length} filas.`);
+    } catch (e) {
+      console.error("Error sembrando Supabase Cloud:", e);
     }
   }
 
@@ -92,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
         vehicles = mapped;
         saveDataLocally();
-        console.log(`✅ Base de datos cargada desde Supabase Cloud oficial (${vehicles.length} registros).`);
+        console.log(`✅ Base de datos cargada exclusivamente desde Supabase Cloud (${vehicles.length} filas de la nube).`);
         return true;
       }
     } catch (err) {
