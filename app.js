@@ -2270,6 +2270,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const clearCacheBtn = document.getElementById('clearCacheBtn');
+  if (clearCacheBtn) {
+    clearCacheBtn.addEventListener('click', () => {
+      const confirmClear = confirm("¿Estás seguro de que quieres borrar la caché local? Esto forzará a la aplicación a descargar todos los datos nuevamente desde Supabase.");
+      if (confirmClear) {
+        localStorage.clear();
+        alert("🧹 Caché eliminada correctamente. La página se recargará para descargar la base de datos de la Nube.");
+        window.location.reload();
+      }
+    });
+  }
+
   // Hook up audit log in excelFileInput
   const excelInputEl = document.getElementById('excelFileInput');
   if (excelInputEl) {
