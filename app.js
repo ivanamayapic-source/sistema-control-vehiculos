@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V33_PUBLIC_QR_ACCESS_MODE';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V34_SYNC_AND_AUDIT_LOGS';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of public QR access mode
+    // Clear all obsolete old caches to force fresh load of sync & audit logs features
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       localStorage.removeItem('CEDI_VEHICLES_DATA');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V32_GATEWAY_ACCESS_MODES');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V33_PUBLIC_QR_ACCESS_MODE');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
@@ -102,6 +102,57 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {
       console.error('Error saving to Supabase:', e);
     }
+  }
+
+  // Audit Logs & Backup Snapshot Stores
+  const STORAGE_KEY_LOGS = 'CEDI_AUDIT_LOGS_V1';
+  const STORAGE_KEY_BACKUP = 'CEDI_BACKUP_SNAPSHOT_V1';
+  let auditLogs = [];
+
+  try {
+    const savedLogs = localStorage.getItem(STORAGE_KEY_LOGS);
+    if (savedLogs) auditLogs = JSON.parse(savedLogs);
+  } catch (e) {
+    auditLogs = [];
+  }
+
+  function saveAuditLogs() {
+    try {
+      localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(auditLogs));
+      renderAuditLogsTable();
+    } catch (e) {}
+  }
+
+  function createBackupSnapshot() {
+    try {
+      const backupData = {
+        timestamp: new Date().toISOString(),
+        formattedDate: new Date().toLocaleString('es-CO'),
+        vehicles: JSON.parse(JSON.stringify(vehicles))
+      };
+      localStorage.setItem(STORAGE_KEY_BACKUP, JSON.stringify(backupData));
+      return backupData;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function logAdminAction(action, vehicle, fieldName, oldVal, newVal) {
+    const logEntry = {
+      id: Date.now().toString() + '_' + Math.random().toString(36).substring(2, 6),
+      timestamp: new Date().toISOString(),
+      formattedDate: new Date().toLocaleString('es-CO'),
+      usuario: 'Administrador',
+      accion: action,
+      placa: vehicle ? vehicle.placa : (fieldName === 'CANTIDAD_REGISTROS' ? 'GLOBAL' : 'N/A'),
+      conductor: vehicle ? vehicle.nombre : 'N/A',
+      cedula: vehicle ? vehicle.cedula : 'N/A',
+      campoModificado: fieldName || 'N/A',
+      valorAnterior: oldVal !== undefined && oldVal !== null ? oldVal.toString() : 'N/A',
+      valorNuevo: newVal !== undefined && newVal !== null ? newVal.toString() : 'N/A'
+    };
+    auditLogs.unshift(logEntry);
+    saveAuditLogs();
   }
 
   function saveDataLocally() {
@@ -1342,6 +1393,13 @@ document.addEventListener('DOMContentLoaded', () => {
     confirmDeleteBtn.addEventListener('click', () => {
       if (!vehicleToDeleteId) return;
       const targetId = vehicleToDeleteId;
+      const targetVehicle = vehicles.find(v => v.id === targetId);
+
+      createBackupSnapshot();
+      if (targetVehicle) {
+        logAdminAction('ELIMINAR', targetVehicle, 'REGISTRO_COMPLETO', targetVehicle.placa, 'ELIMINADO_DE_APLICACION');
+      }
+
       vehicles = vehicles.filter(v => v.id !== targetId);
       saveData();
       closeDeleteModal();
@@ -1438,10 +1496,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const licCat = document.getElementById('formLicCat').value.trim().toUpperCase();
     const licVenc = document.getElementById('formLicVenc').value;
 
+    createBackupSnapshot();
+
     if (id) {
       // Edit existing by ID
       const idx = vehicles.findIndex(x => x.id === id);
       if (idx !== -1) {
+        const oldV = vehicles[idx];
+        if (oldV.soatVencimiento !== soat) logAdminAction('RENOVAR_SOAT', oldV, 'FECHA_SOAT', oldV.soatVencimiento, soat);
+        if (oldV.rtmVencimiento !== rtm) logAdminAction('RENOVAR_RTM', oldV, 'FECHA_RTM', oldV.rtmVencimiento, rtm);
+        if (oldV.licenciaVencimiento !== licVenc) logAdminAction('RENOVAR_LICENCIA', oldV, 'FECHA_LICENCIA', oldV.licenciaVencimiento, licVenc);
+        if (oldV.licenciaCategoria !== licCat) logAdminAction('EDITAR', oldV, 'CATEGORIA_LICENCIA', oldV.licenciaCategoria, licCat);
+        if (oldV.placa !== placa) logAdminAction('EDITAR', oldV, 'PLACA', oldV.placa, placa);
+
         vehicles[idx] = {
           ...vehicles[idx],
           placa,
@@ -1461,7 +1528,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const existingCedIdx = vehicles.findIndex(x => x.cedula.replace(/[^0-9]/g, '').replace(/^0+/, '') === cleanCed);
       
       if (existingCedIdx !== -1) {
-        // Update existing record instead of creating a duplicate
+        const oldV = vehicles[existingCedIdx];
+        if (oldV.soatVencimiento !== soat) logAdminAction('RENOVAR_SOAT', oldV, 'FECHA_SOAT', oldV.soatVencimiento, soat);
+        if (oldV.rtmVencimiento !== rtm) logAdminAction('RENOVAR_RTM', oldV, 'FECHA_RTM', oldV.rtmVencimiento, rtm);
+        if (oldV.licenciaVencimiento !== licVenc) logAdminAction('RENOVAR_LICENCIA', oldV, 'FECHA_LICENCIA', oldV.licenciaVencimiento, licVenc);
+        if (oldV.licenciaCategoria !== licCat) logAdminAction('EDITAR', oldV, 'CATEGORIA_LICENCIA', oldV.licenciaCategoria, licCat);
+        if (oldV.placa !== placa) logAdminAction('EDITAR', oldV, 'PLACA', oldV.placa, placa);
+
         vehicles[existingCedIdx] = {
           ...vehicles[existingCedIdx],
           placa,
@@ -1476,7 +1549,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         // Add new
         const newId = (Date.now()).toString();
-        vehicles.unshift({
+        const newObj = {
           id: newId,
           placa,
           tipoVehiculo: tipo,
@@ -1490,13 +1563,15 @@ document.addEventListener('DOMContentLoaded', () => {
           licenciaVencimiento: licVenc,
           soatVencimiento: soat,
           rtmVencimiento: rtm
-        });
+        };
+        vehicles.unshift(newObj);
+        logAdminAction('CREAR', newObj, 'REGISTRO_NUEVO', 'NIN-GUNO', placa);
       }
     }
 
     saveData();
     editModal.classList.add('hidden');
-    alert("¡Información guardada exitosamente sin duplicados!");
+    alert("¡Información guardada exitosamente y sincronizada!");
   });
 
   // --------------------------------------------------------------------------
@@ -1808,6 +1883,166 @@ document.addEventListener('DOMContentLoaded', () => {
     reader.readAsArrayBuffer(file);
   });
 
+  // --------------------------------------------------------------------------
+  // 10. AUDIT LOGS & BACKUP TABLE RENDERING & EXPORTS
+  // --------------------------------------------------------------------------
+  const logsTableBody = document.getElementById('logsTableBody');
+  const logSearchInput = document.getElementById('logSearchInput');
+  const logTotalCount = document.getElementById('logTotalCount');
+
+  let logSearchQuery = '';
+
+  if (logSearchInput) {
+    logSearchInput.addEventListener('input', (e) => {
+      logSearchQuery = e.target.value.trim().toLowerCase();
+      renderAuditLogsTable();
+    });
+  }
+
+  function renderAuditLogsTable() {
+    if (!logsTableBody) return;
+    
+    const filteredLogs = auditLogs.filter(log => {
+      if (!logSearchQuery) return true;
+      const q = logSearchQuery;
+      return (
+        (log.placa || '').toLowerCase().includes(q) ||
+        (log.conductor || '').toLowerCase().includes(q) ||
+        (log.cedula || '').toLowerCase().includes(q) ||
+        (log.accion || '').toLowerCase().includes(q) ||
+        (log.campoModificado || '').toLowerCase().includes(q)
+      );
+    });
+
+    if (logTotalCount) logTotalCount.textContent = filteredLogs.length;
+    logsTableBody.innerHTML = '';
+
+    if (filteredLogs.length === 0) {
+      logsTableBody.innerHTML = `
+        <tr>
+          <td colspan="8" class="py-8 text-center text-slate-500 text-xs font-sans">
+            No se han registrado modificaciones o eventos en la bitácora de auditoría.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    filteredLogs.forEach(log => {
+      const tr = document.createElement('tr');
+      tr.className = "hover:bg-slate-800/40 transition-colors text-[11px]";
+
+      let actionBadge = '';
+      if (log.accion.includes('ELIMINAR')) {
+        actionBadge = '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-rose-950 text-rose-400 border border-rose-500/30">ELIMINAR</span>';
+      } else if (log.accion.includes('CREAR')) {
+        actionBadge = '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-500/30">CREAR</span>';
+      } else if (log.accion.includes('IMPORTAR')) {
+        actionBadge = '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-purple-950 text-purple-400 border border-purple-500/30">IMPORTAR EXCEL</span>';
+      } else {
+        actionBadge = '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-950 text-amber-400 border border-amber-500/30">EDITAR / RENOVACIÓN</span>';
+      }
+
+      tr.innerHTML = `
+        <td class="py-2.5 px-4 text-slate-400 whitespace-nowrap">${log.formattedDate}</td>
+        <td class="py-2.5 px-4 font-bold text-sky-400 whitespace-nowrap"><i class="fa-solid fa-user-shield text-[10px]"></i> ${log.usuario}</td>
+        <td class="py-2.5 px-4">${actionBadge}</td>
+        <td class="py-2.5 px-4 font-bold text-amber-400">${log.placa}</td>
+        <td class="py-2.5 px-4 text-white font-sans">${log.conductor}</td>
+        <td class="py-2.5 px-4 font-semibold text-slate-300">${log.campoModificado}</td>
+        <td class="py-2.5 px-4 text-rose-300 font-mono line-through">${log.valorAnterior}</td>
+        <td class="py-2.5 px-4 text-emerald-300 font-mono font-bold">${log.valorNuevo}</td>
+      `;
+
+      logsTableBody.appendChild(tr);
+    });
+  }
+
+  // Export Audit Logs to Excel
+  const exportAuditLogsBtn = document.getElementById('exportAuditLogsBtn');
+  if (exportAuditLogsBtn) {
+    exportAuditLogsBtn.addEventListener('click', () => {
+      if (auditLogs.length === 0) {
+        alert('No hay eventos en la bitácora para exportar.');
+        return;
+      }
+      const dataToExport = auditLogs.map(log => ({
+        'FECHA Y HORA': log.formattedDate,
+        'USUARIO': log.usuario,
+        'ACCIÓN': log.accion,
+        'PLACA': log.placa,
+        'CONDUCTOR': log.conductor,
+        'CÉDULA': log.cedula,
+        'CAMPO MODIFICADO': log.campoModificado,
+        'VALOR ANTERIOR': log.valorAnterior,
+        'VALOR NUEVO': log.valorNuevo
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(dataToExport);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "BITACORA_HISTORIAL_CAMBIOS");
+      XLSX.writeFile(wb, `BITACORA_CAMBIOS_CEDI_${new Date().toISOString().slice(0,10)}.xlsx`);
+    });
+  }
+
+  // Export Synchronized Excel Database
+  function exportSynchronizedExcel() {
+    createBackupSnapshot();
+    const dataToExport = vehicles.map(v => ({
+      'PLACA': v.placa,
+      'NOMBRE COMPLETO Y APELLIDOS': v.nombre,
+      'CEDULA (SIN PUNTOS)': v.cedula,
+      'TIPO DE VEHICULO': v.tipoVehiculo,
+      'EMPRESA': v.empresa,
+      'CENTRO DE DISTRIBUCION': v.centroDistribucion || 'CEDI BUCARAMANGA',
+      'POSICIONES': v.cargo,
+      'FECHA VENCIMIENTO SOAT': v.soatVencimiento,
+      'FECHA VENCIMIENTO RTM': v.rtmVencimiento,
+      'CATEGORIA LICENCIA': v.licenciaCategoria,
+      'FECHA VENCIMIENTO LICENCIA': v.licenciaVencimiento,
+      'ESTADO DOCUMENTOS': getVehicleOverallStatus(v)
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "BASE_DATOS_OFICIAL_CEDI");
+    
+    const now = new Date();
+    const ts = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}`;
+    XLSX.writeFile(wb, `BaseDatos_Oficial_Sincronizada_${ts}.xlsx`);
+  }
+
+  const downloadSyncExcelBtn = document.getElementById('downloadSyncExcelBtn');
+  if (downloadSyncExcelBtn) {
+    downloadSyncExcelBtn.addEventListener('click', () => {
+      exportSynchronizedExcel();
+    });
+  }
+
+  // Hook up audit log in excelFileInput
+  const excelInputEl = document.getElementById('excelFileInput');
+  if (excelInputEl) {
+    const originalChange = excelInputEl.onchange;
+    excelInputEl.addEventListener('change', () => {
+      createBackupSnapshot();
+      logAdminAction('IMPORTAR_EXCEL', null, 'ARCHIVOS_EXCEL', 'VERSION_ANTERIOR', 'NUEVA_BASE_DATOS_CARGADA');
+    });
+  }
+
+  // Add tabs.logs definition to switchTab
+  tabs.logs = document.getElementById('tab-logs');
+  views.logs = document.getElementById('view-logs');
+  if (tabs.logs) {
+    tabs.logs.addEventListener('click', () => {
+      if (typeof requestAdminAccess === 'function') {
+        requestAdminAccess('logs');
+      } else {
+        switchTab('logs');
+      }
+      renderAuditLogsTable();
+    });
+  }
+
   // Initial render - Load vehicles data first!
   initData();
   updateKPIs();
@@ -1815,4 +2050,5 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof populateBadgeDropdownFilters === 'function') populateBadgeDropdownFilters();
   if (typeof populateBadgeSelector === 'function') populateBadgeSelector();
   renderDatabaseTable();
+  renderAuditLogsTable();
 });
