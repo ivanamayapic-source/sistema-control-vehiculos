@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_EXCEL_MAIN_ACTIVE_DB_V44';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V45_DEBUG_ISOLATION_TEST';
 
   // Supabase is completely bypassed for active operations per user architectural directive
   const supabaseClient = null;
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     saveDataLocally();
-    console.log(`✅ Base de datos principal activa cargada con éxito (${vehicles.length} vehículos). Fuente oficial: Excel / Dataset Principal.`);
+    console.log("initData", vehicles.length);
   }
 
   // Bypassed Supabase functions preserved dormant for future reference
@@ -1217,12 +1217,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function populateDropdownFilters() {
     if (!dbCdFilter || !dbEmpresaFilter || !dbLicenciaFilter || !dbTipoFilter) return;
 
+    console.log("populateDropdownFilters recibio:", vehicles.length, "registros");
+
     const currentSelectedCd = dbCdFilter.value || currentCdFilter || 'ALL';
     const currentSelectedEmp = dbEmpresaFilter.value || currentEmpresaFilter || 'ALL';
     const currentSelectedLic = dbLicenciaFilter.value || currentLicenciaFilter || 'ALL';
     const currentSelectedTipo = dbTipoFilter.value || currentTipoFilter || 'ALL';
 
-    // 1. CD options (Col X)
+    // 1. CD options (Col X) built DIRECTLY from global vehicles array
     const cds = Array.from(new Set(vehicles.map(v => (v.centroDistribucion || '').toString().trim()))).filter(x => x && x !== '0' && x !== 'N/A' && x !== 'NO APLICA').sort();
     dbCdFilter.innerHTML = '<option value="ALL">🏢 Todos los CD (Col. X)</option>';
     cds.forEach(cd => {
@@ -1232,8 +1234,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (cd === currentSelectedCd) opt.selected = true;
       dbCdFilter.appendChild(opt);
     });
+    console.log("Opciones agregadas a Todos los CD:", cds.length, cds);
 
-    // 2. Empresa options (Col U)
+    // 2. Empresa options (Col U) built DIRECTLY from global vehicles array
     const empresas = Array.from(new Set(vehicles.map(v => (v.empresa || '').toString().trim()))).filter(x => x && x !== '0' && x !== 'N/A' && x !== 'NO APLICA').sort();
     dbEmpresaFilter.innerHTML = '<option value="ALL">🏭 Todas las Empresas (Col. U)</option>';
     empresas.forEach(emp => {
@@ -1243,8 +1246,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (emp === currentSelectedEmp) opt.selected = true;
       dbEmpresaFilter.appendChild(opt);
     });
+    console.log("Opciones agregadas a Empresas:", empresas.length, empresas);
 
-    // 3. Licencia options (Col AP/AV)
+    // 3. Licencia options (Col AP/AV) built DIRECTLY from global vehicles array
     const licencias = Array.from(new Set(vehicles.map(v => (v.licenciaCategoria || '').toString().trim()))).filter(x => x && x !== '0' && x !== 'N/A' && x !== 'NO APLICA').sort();
     dbLicenciaFilter.innerHTML = '<option value="ALL">🪪 Todas las Licencias (Col. AP/AV)</option>';
     licencias.forEach(lic => {
@@ -1255,7 +1259,7 @@ document.addEventListener('DOMContentLoaded', () => {
       dbLicenciaFilter.appendChild(opt);
     });
 
-    // 4. Tipo de Vehículo options
+    // 4. Tipo de Vehículo options built DIRECTLY from global vehicles array
     const tipos = Array.from(new Set(vehicles.map(v => (v.tipoVehiculo || '').toString().trim()))).filter(Boolean).sort();
     dbTipoFilter.innerHTML = '<option value="ALL">🛵🚗 Todos los Tipos</option>';
     tipos.forEach(t => {
@@ -1265,6 +1269,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (t === currentSelectedTipo) opt.selected = true;
       dbTipoFilter.appendChild(opt);
     });
+    console.log("Opciones agregadas a Tipo de Vehiculo:", tipos.length, tipos);
   }
 
   function getBaseFilteredVehicles() {
@@ -1295,6 +1300,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateFilterCounts() {
     const baseSet = getBaseFilteredVehicles();
+    console.log("updateKPIs cantidad de registros en memoria (vehicles):", vehicles.length, "| registros filtrados para indicadores:", baseSet.length);
+
     let vigentesCount = 0;
     let porVencerCount = 0;
     let vencidosCount = 0;
@@ -1350,12 +1357,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const filtered = getFilteredVehicles();
     const total = filtered.length;
 
+    console.log("renderDatabaseTable recibio:", filtered.length, "vehiculos filtrados para renderizar.");
+
     const totalPages = Math.ceil(total / pageSize) || 1;
     if (currentPage > totalPages) currentPage = totalPages;
 
     const startIdx = (currentPage - 1) * pageSize;
     const endIdx = Math.min(startIdx + pageSize, total);
     const pageItems = filtered.slice(startIdx, endIdx);
+
+    console.log("Cantidad de filas renderizadas en la pagina actual:", pageItems.length);
 
     document.getElementById('pageStart').textContent = total === 0 ? 0 : startIdx + 1;
     document.getElementById('pageEnd').textContent = endIdx;
