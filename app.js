@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V30_STRICT_DISCARD_INVALID_PLATES';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V31_DELETE_BUTTON_ADDED';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of strictly valid plates dataset
+    // Clear all obsolete old caches to force fresh load of delete button feature
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       localStorage.removeItem('CEDI_VEHICLES_DATA');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V29_COLOMBIAN_PLATE_PATTERN');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V30_STRICT_DISCARD_INVALID_PLATES');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
@@ -1164,9 +1164,14 @@ document.addEventListener('DOMContentLoaded', () => {
         </td>
         <td class="py-3 px-4">${statusBadge}</td>
         <td class="py-3 px-4 text-center">
-          <button data-id="${v.id}" class="btn-edit-vehicle bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 mx-auto">
-            <i class="fa-solid fa-pen-to-square"></i> Renovar / Editar
-          </button>
+          <div class="flex items-center justify-center gap-1.5">
+            <button data-id="${v.id}" class="btn-edit-vehicle bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1">
+              <i class="fa-solid fa-pen-to-square"></i> Renovar / Editar
+            </button>
+            <button data-id="${v.id}" class="btn-delete-vehicle bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1">
+              <i class="fa-solid fa-trash-can"></i> Eliminar
+            </button>
+          </div>
         </td>
       `;
 
@@ -1179,6 +1184,67 @@ document.addEventListener('DOMContentLoaded', () => {
         const id = e.currentTarget.getAttribute('data-id');
         openEditModal(id);
       });
+    });
+
+    // Attach Delete button events
+    document.querySelectorAll('.btn-delete-vehicle').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = e.currentTarget.getAttribute('data-id');
+        openDeleteModal(id);
+      });
+    });
+  }
+
+  // Delete Confirmation Modal Logic
+  let vehicleToDeleteId = null;
+  const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+  const delModalPlaca = document.getElementById('delModalPlaca');
+  const delModalNombre = document.getElementById('delModalNombre');
+  const delModalCedula = document.getElementById('delModalCedula');
+  const delModalTipo = document.getElementById('delModalTipo');
+  const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+  const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+  function openDeleteModal(id) {
+    const v = vehicles.find(x => x.id === id);
+    if (!v) return;
+    vehicleToDeleteId = id;
+    if (delModalPlaca) delModalPlaca.textContent = v.placa;
+    if (delModalNombre) delModalNombre.textContent = v.nombre;
+    if (delModalCedula) delModalCedula.textContent = v.cedula;
+    if (delModalTipo) delModalTipo.textContent = v.tipoVehiculo;
+    if (deleteConfirmModal) deleteConfirmModal.classList.remove('hidden');
+  }
+
+  function closeDeleteModal() {
+    vehicleToDeleteId = null;
+    if (deleteConfirmModal) deleteConfirmModal.classList.add('hidden');
+  }
+
+  if (cancelDeleteBtn) {
+    cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+  }
+
+  if (deleteConfirmModal) {
+    deleteConfirmModal.addEventListener('click', (e) => {
+      if (e.target === deleteConfirmModal) closeDeleteModal();
+    });
+  }
+
+  if (confirmDeleteBtn) {
+    confirmDeleteBtn.addEventListener('click', () => {
+      if (!vehicleToDeleteId) return;
+      const targetId = vehicleToDeleteId;
+      vehicles = vehicles.filter(v => v.id !== targetId);
+      saveData();
+      closeDeleteModal();
+
+      // Refresh all UI elements, KPIs, and dropdowns
+      updateKPIs();
+      populateDropdownFilters();
+      if (typeof populateBadgeDropdownFilters === 'function') populateBadgeDropdownFilters();
+      if (typeof populateBadgeSelector === 'function') populateBadgeSelector();
+      renderDatabaseTable();
     });
   }
 
