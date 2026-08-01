@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V39_DYNAMIC_SUPABASE_FILTERS';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V40_FIX_DROPDOWN_DOM_RACE';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -291,8 +291,6 @@ document.addEventListener('DOMContentLoaded', () => {
       saveToSupabase(updatedVehicle);
     }
   }
-
-  initData();
 
   function getTodayDate() {
     const today = new Date();
@@ -2280,12 +2278,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Initial render - Load vehicles data first!
-  initData();
-  updateKPIs();
-  populateDropdownFilters();
-  if (typeof populateBadgeDropdownFilters === 'function') populateBadgeDropdownFilters();
-  if (typeof populateBadgeSelector === 'function') populateBadgeSelector();
-  renderDatabaseTable();
-  renderAuditLogsTable();
+  // Initial render - Async load vehicles data from Supabase first, then render UI!
+  (async () => {
+    await initData();
+    updateKPIs();
+    populateDropdownFilters();
+    if (typeof populateBadgeDropdownFilters === 'function') populateBadgeDropdownFilters();
+    if (typeof populateBadgeSelector === 'function') populateBadgeSelector();
+    renderDatabaseTable();
+    renderAuditLogsTable();
+  })();
 });
