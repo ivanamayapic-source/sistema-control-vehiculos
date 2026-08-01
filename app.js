@@ -80,8 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
       soat_vencimiento: (v.soatVencimiento && v.soatVencimiento !== 'N/A') ? v.soatVencimiento : null,
       rtm_vencimiento: (v.rtmVencimiento && v.rtmVencimiento !== 'N/A') ? v.rtmVencimiento : null,
       licencia_categoria: v.licenciaCategoria || 'SIN CATEGORÍA',
-      licencia_vencimiento: (v.licenciaVencimiento && v.licenciaVencimiento !== 'N/A') ? v.licenciaVencimiento : null,
-      updated_at: new Date().toISOString()
+      licencia_vencimiento: (v.licenciaVencimiento && v.licenciaVencimiento !== 'N/A') ? v.licenciaVencimiento : null
     };
   }
 
@@ -223,9 +222,16 @@ document.addEventListener('DOMContentLoaded', () => {
   async function saveToSupabase(v) {
     if (!supabaseClient || !v) return;
     try {
-      const { error } = await supabaseClient.from('vehicles').upsert(vehicleToSupabaseRow(v), { onConflict: 'id' });
-      if (error) console.warn('saveToSupabase error:', error.message);
+      const row = vehicleToSupabaseRow(v);
+      const { error } = await supabaseClient.from('vehicles').upsert(row, { onConflict: 'id' });
+      if (error) {
+        showErrorLog(`Error guardando placa ${v.placa}: ` + error.message);
+        console.warn('saveToSupabase error:', error.message);
+      } else {
+        showErrorLog(`✅ Placa ${v.placa} guardada en Nube correctamente.`);
+      }
     } catch (e) {
+      showErrorLog('Catch error guardando en Supabase: ' + e.message);
       console.error('Error guardando en Supabase:', e);
     }
   }
@@ -235,9 +241,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!supabaseClient || !vehicleId) return;
     try {
       const { error } = await supabaseClient.from('vehicles').delete().eq('id', vehicleId);
-      if (error) console.warn('deleteFromSupabase error:', error.message);
+      if (error) {
+        showErrorLog('Error eliminando de Supabase: ' + error.message);
+        console.warn('deleteFromSupabase error:', error.message);
+      } else {
+        showErrorLog(`✅ Registro ${vehicleId} eliminado de la Nube.`);
+      }
     } catch (e) {
+      showErrorLog('Catch error eliminando de Supabase: ' + e.message);
       console.error('Error eliminando de Supabase:', e);
+    }
+  }
+
+  // Debug Panel Helper
+  function showErrorLog(msg) {
+    const debugBox = document.getElementById('debugErrorLog');
+    if (debugBox) {
+      const time = new Date().toLocaleTimeString();
+      debugBox.innerHTML += `<div>[${time}] ${msg}</div>`;
+      debugBox.scrollTop = debugBox.scrollHeight;
+      document.getElementById('debugPanel').classList.remove('hidden');
     }
   }
 
