@@ -484,6 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function setRole(role) {
     currentUserRole = role;
+    localStorage.setItem('CEDI_AUTH_ROLE', role);
     if (role === 'VIGILANCIA') {
       if (headerRoleBadgeText) headerRoleBadgeText.textContent = 'Módulo Vigilancia (Solo Consulta)';
       if (btnHeaderRoleSwitch) {
@@ -2290,6 +2291,15 @@ document.addEventListener('DOMContentLoaded', () => {
       createBackupSnapshot();
       logAdminAction('IMPORTAR_EXCEL', null, 'ARCHIVOS_EXCEL', 'VERSION_ANTERIOR', 'NUEVA_BASE_DATOS_CARGADA');
     });
+  }
+
+  // Restore role from localStorage if exists
+  const savedRole = localStorage.getItem('CEDI_AUTH_ROLE');
+  if (savedRole) {
+    setRole(savedRole);
+    if (savedRole === 'ADMIN') {
+      switchTab('database');
+    }
   }
 
   // Initial render - Load vehicles data first!
