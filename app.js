@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V27_PLATE_NORMALIZED';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V28_FUZZY_TYPO_CONSOLIDATED';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of plate normalized dataset
+    // Clear all obsolete old caches to force fresh load of fuzzy typo consolidated dataset
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       localStorage.removeItem('CEDI_VEHICLES_DATA');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V26_FULL_DISCOVERY_348');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V27_PLATE_NORMALIZED');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
@@ -1454,12 +1454,39 @@ document.addEventListener('DOMContentLoaded', () => {
         let ignoredRoleCount = 0;
         let duplicatesFiltered = 0;
 
+        const getLevenshteinDistance = (s, t) => {
+          const n = s.length, m = t.length;
+          if (n === 0) return m;
+          if (m === 0) return n;
+          const d = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+          for (let i = 0; i <= n; i++) d[i][0] = i;
+          for (let j = 0; j <= m; j++) d[0][j] = j;
+          for (let i = 1; i <= n; i++) {
+            for (let j = 1; j <= m; j++) {
+              const cost = s[i - 1] === t[j - 1] ? 0 : 1;
+              d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+            }
+          }
+          return d[n][m];
+        };
+
+        const isSimilarPlaca = (p1, p2) => {
+          if (!p1 || !p2) return false;
+          if (p1 === p2) return true;
+          if (Math.abs(p1.length - p2.length) <= 1) {
+            if (p1.startsWith(p2) || p2.startsWith(p1) || p1.endsWith(p2) || p2.endsWith(p1)) return true;
+            if (p1.length >= 4 && p2.length >= 4) {
+              if (getLevenshteinDistance(p1, p2) <= 1) return true;
+            }
+          }
+          return false;
+        };
+
         rowsByCedulaMap.forEach((list, cleanCedula) => {
           // Sort from newest to oldest by Col B Hora de inicio
           list.sort((a, b) => b.numTime - a.numTime);
           const latestRow = list[0].row;
 
-          // Rol Vial exclusively from latest row
           const rolVial = (latestRow['SELECCIONE EL ROL VIAL HABITUAL QUE UTILIZA PARA DESPLAZARSE CASA-TRABAJO-CASA'] || latestRow['ROL VIAL'] || latestRow['AM'] || '').toString().trim();
           const rolLower = rolVial.toLowerCase();
           const isConductorMoto = rolLower.includes('conductor') && rolLower.includes('motocicleta');
@@ -1476,7 +1503,6 @@ document.addEventListener('DOMContentLoaded', () => {
           const empresa = (latestRow['EMPRESA'] || latestRow['Empresa'] || latestRow['U'] || 'CEDI').toString().trim();
           const empresaUpper = empresa.toUpperCase();
 
-          // 1. ABI, HONOR, RENTAS bypass active check
           const isExempt = (empresaUpper.includes('ABI') || empresaUpper.includes('HONOR') || empresaUpper.includes('RENTAS'));
 
           if (!isExempt) {
@@ -1525,12 +1551,24 @@ document.addEventListener('DOMContentLoaded', () => {
               displayPlaca = `CC-${cleanCedula}-${tv.tipoVehiculo}`;
             }
 
-            const dedupKey = `${cleanCedula}_${tv.tipoVehiculo}_${displayPlaca}`;
-            if (dedupedRecordsMap.has(dedupKey)) {
+            // Check if another vehicle for this collaborator matches or is fuzzy similar
+            let existingKey = null;
+            for (const [key, existingRecord] of dedupedRecordsMap.entries()) {
+              if (existingRecord.cedula === cleanCedula && existingRecord.tipoVehiculo === tv.tipoVehiculo) {
+                const existingClean = existingRecord.placa.replace(/[^A-Z0-9]/g, '');
+                if (isSimilarPlaca(existingClean, cleanPlaca)) {
+                  existingKey = key;
+                  break;
+                }
+              }
+            }
+
+            if (existingKey) {
               duplicatesFiltered++;
               return;
             }
 
+            const dedupKey = `${cleanCedula}_${tv.tipoVehiculo}_${displayPlaca}`;
             dedupedRecordsMap.set(dedupKey, {
               id: (dedupedRecordsMap.size + 1).toString(),
               placa: displayPlaca,
