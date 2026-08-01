@@ -2116,6 +2116,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const saveAllChangesBtn = document.getElementById('saveAllChangesBtn');
+  if (saveAllChangesBtn) {
+    saveAllChangesBtn.addEventListener('click', async () => {
+      saveDataLocally();
+      if (typeof writePhysicalExcelFile === 'function') {
+        await writePhysicalExcelFile();
+      }
+      alert("💾 ¡Cambios guardados con éxito! La aplicación se recargará ahora para mostrar la información totalmente actualizada.");
+      window.location.reload();
+    });
+  }
+
   // Hook up audit log in excelFileInput
   const excelInputEl = document.getElementById('excelFileInput');
   if (excelInputEl) {
