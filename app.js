@@ -8,43 +8,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V43_VITE_COMPATIBLE_ENV';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_EXCEL_MAIN_ACTIVE_DB_V44';
 
-  // Environment Variable Resolver for Vite, Vercel, Node, Window & LocalStorage
-  const getEnv = (key) => {
-    try {
-      if (typeof import.meta !== 'undefined' && import.meta && import.meta.env && import.meta.env[key]) {
-        return import.meta.env[key];
-      }
-    } catch (e) {}
-    try {
-      if (typeof process !== 'undefined' && process && process.env && process.env[key]) {
-        return process.env[key];
-      }
-    } catch (e) {}
-    if (typeof window !== 'undefined') {
-      if (window[key]) return window[key];
-      if (window.ENV && window.ENV[key]) return window.ENV[key];
-    }
-    return '';
-  };
+  // Supabase is completely bypassed for active operations per user architectural directive
+  const supabaseClient = null;
 
-  // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
-  const SUPABASE_URL = getEnv('VITE_SUPABASE_URL') || getEnv('SUPABASE_URL') || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
-  const SUPABASE_KEY = getEnv('VITE_SUPABASE_ANON_KEY') || getEnv('SUPABASE_ANON_KEY') || getEnv('SUPABASE_KEY') || localStorage.getItem('SUPABASE_KEY') || '';
-  let supabaseClient = null;
-
-  if (window.supabase && SUPABASE_URL && SUPABASE_KEY) {
-    try {
-      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      console.log('Supabase Cloud Database (zamqqaiipwatbaubvlpq) Conectado Correctamente');
-    } catch (err) {
-      console.error('Error conectando a Supabase:', err);
-    }
-  }
-
-  async function initData() {
-    // Clear all obsolete old caches to force fresh load
+  function initData() {
+    // Clear all obsolete old caches to force fresh clean load
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -55,134 +25,33 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.removeItem('CEDI_VEHICLES_DATA');
     } catch (e) {}
 
-    if (!supabaseClient) {
-      // Offline fallback
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try { vehicles = JSON.parse(saved); } catch (e) {}
-      }
-      if (!vehicles || vehicles.length === 0) {
-        vehicles = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) ? window.INITIAL_VEHICLES : [];
-      }
-      saveDataLocally();
-      return;
+    // Load active database from localStorage or fallback to initial consolidated dataset (window.INITIAL_VEHICLES)
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          vehicles = parsed;
+        }
+      } catch (e) {}
     }
 
-    try {
-      // 1. Check COUNT(*) on Supabase Cloud table 'vehicles'
-      let countRes = await supabaseClient.from('vehicles').select('id', { count: 'exact', head: true });
-      let tableName = 'vehicles';
-      
-      if (countRes.error) {
-        countRes = await supabaseClient.from('vehiculos').select('id', { count: 'exact', head: true });
-        tableName = 'vehiculos';
-      }
-
-      const rowCount = (countRes && typeof countRes.count === 'number') ? countRes.count : 0;
-
-      if (rowCount > 0) {
-        // CASE 1: Supabase already has records! Read directly from Supabase Cloud as single source of truth.
-        console.log(`📡 Supabase Cloud (${tableName}) contiene ${rowCount} filas. Leyendo exclusivamente de Supabase Cloud...`);
-        const loaded = await fetchVehiclesFromSupabase();
-        if (!loaded || vehicles.length === 0) {
-          // Backup fallback from localStorage cache if network fails
-          const saved = localStorage.getItem(STORAGE_KEY);
-          if (saved) {
-            try { vehicles = JSON.parse(saved); } catch (e) {}
-          }
-        }
-      } else {
-        // CASE 2: Supabase is empty (0 records)! AUTO-INITIALIZE / AUTO-SEED SUPABASE CLOUD ONCE!
-        console.log("⚡ Supabase Cloud está vacío (0 filas). Autopoblando la base de datos con los 301 vehículos semilla...");
-        const seedData = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
-          ? window.INITIAL_VEHICLES 
-          : [];
-        
-        if (seedData.length > 0) {
-          vehicles = seedData;
-          saveDataLocally();
-          await seedSupabaseCloud(seedData);
-          await fetchVehiclesFromSupabase();
-        }
-      }
-    } catch (err) {
-      console.warn("⚠️ Error durante la comprobación de Supabase Cloud:", err);
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try { vehicles = JSON.parse(saved); } catch (e) {}
-      }
-      if (!vehicles || vehicles.length === 0) {
-        vehicles = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) ? window.INITIAL_VEHICLES : [];
-      }
-      saveDataLocally();
+    if (!vehicles || vehicles.length === 0) {
+      vehicles = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
+        ? JSON.parse(JSON.stringify(window.INITIAL_VEHICLES))
+        : [];
     }
+
+    saveDataLocally();
+    console.log(`✅ Base de datos principal activa cargada con éxito (${vehicles.length} vehículos). Fuente oficial: Excel / Dataset Principal.`);
   }
 
-  async function seedSupabaseCloud(seedList) {
-    if (!supabaseClient || !seedList || seedList.length === 0) return;
-    const recordsToInsert = seedList.map(v => ({
-      id: v.id,
-      placa: v.placa,
-      nombre: v.nombre,
-      cedula: v.cedula,
-      tipo_vehiculo: v.tipoVehiculo,
-      empresa: v.empresa || 'CEDI',
-      centro_distribucion: v.centroDistribucion || 'CD BUCARAMANGA',
-      cargo: v.cargo || 'COLABORADOR',
-      soat_vencimiento: (v.soatVencimiento && v.soatVencimiento !== 'N/A') ? v.soatVencimiento : null,
-      rtm_vencimiento: (v.rtmVencimiento && v.rtmVencimiento !== 'N/A') ? v.rtmVencimiento : null,
-      licencia_categoria: v.licenciaCategoria || 'SIN CATEGORÍA',
-      licencia_vencimiento: (v.licenciaVencimiento && v.licenciaVencimiento !== 'N/A') ? v.licenciaVencimiento : null,
-      updated_at: new Date().toISOString()
-    }));
-
-    try {
-      const chunkSize = 50;
-      for (let i = 0; i < recordsToInsert.length; i += chunkSize) {
-        const chunk = recordsToInsert.slice(i, i + chunkSize);
-        let res = await supabaseClient.from('vehicles').upsert(chunk, { onConflict: 'id' });
-        if (res.error) {
-          await supabaseClient.from('vehiculos').upsert(chunk, { onConflict: 'id' });
-        }
-      }
-      console.log(`✅ Supabase Cloud auto-poblado exitosamente con ${recordsToInsert.length} filas.`);
-    } catch (e) {
-      console.error("Error sembrando Supabase Cloud:", e);
-    }
-  }
-
-  async function fetchVehiclesFromSupabase() {
-    if (!supabaseClient) return false;
-    try {
-      let res = await supabaseClient.from('vehicles').select('*');
-      if (res.error || !res.data || res.data.length === 0) {
-        res = await supabaseClient.from('vehiculos').select('*');
-      }
-      if (!res.error && res.data && res.data.length > 0) {
-        const mapped = res.data.map(row => ({
-          id: row.id ? row.id.toString() : (Date.now() + Math.random()).toString(),
-          placa: row.placa || '',
-          nombre: row.nombre || '',
-          cedula: row.cedula || '',
-          tipoVehiculo: row.tipo_vehiculo || 'MOTOCICLETA',
-          empresa: row.empresa || 'CEDI',
-          centroDistribucion: row.centro_distribucion || 'CD BUCARAMANGA',
-          cargo: row.cargo || 'COLABORADOR',
-          soatVencimiento: row.soat_vencimiento || 'N/A',
-          rtmVencimiento: row.rtm_vencimiento || 'N/A',
-          licenciaCategoria: row.licencia_categoria || 'SIN CATEGORÍA',
-          licenciaVencimiento: row.licencia_vencimiento || 'N/A'
-        }));
-        vehicles = mapped;
-        saveDataLocally();
-        console.log(`✅ Base de datos cargada exclusivamente desde Supabase Cloud (${vehicles.length} filas de la nube).`);
-        return true;
-      }
-    } catch (err) {
-      console.warn("⚠️ No se pudo consultar Supabase Cloud directamente:", err);
-    }
-    return false;
-  }
+  // Bypassed Supabase functions preserved dormant for future reference
+  async function fetchVehiclesFromSupabase() { return false; }
+  async function seedSupabaseCloud() { return false; }
+  async function syncWithSupabase() { return false; }
+  async function saveToSupabase() { return false; }
+  async function deleteFromSupabase() { return false; }
 
   async function syncWithSupabase() {
     if (!supabaseClient) return;
@@ -2339,7 +2208,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (exportMainDbExcelBtn) {
     exportMainDbExcelBtn.addEventListener('click', () => {
       exportSynchronizedExcel();
-      alert("✅ Base de datos exportada exitosamente desde la base de datos principal de Supabase.");
+      alert("✅ Base de datos exportada exitosamente desde la base de datos principal activa.");
     });
   }
 
@@ -2367,14 +2236,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Initial render - Async load vehicles data from Supabase first, then render UI!
-  (async () => {
-    await initData();
-    updateKPIs();
-    populateDropdownFilters();
-    if (typeof populateBadgeDropdownFilters === 'function') populateBadgeDropdownFilters();
-    if (typeof populateBadgeSelector === 'function') populateBadgeSelector();
-    renderDatabaseTable();
-    renderAuditLogsTable();
-  })();
+  // Initial render - Synchronously load active vehicles dataset and render UI!
+  initData();
+  updateKPIs();
+  populateDropdownFilters();
+  if (typeof populateBadgeDropdownFilters === 'function') populateBadgeDropdownFilters();
+  if (typeof populateBadgeSelector === 'function') populateBadgeSelector();
+  renderDatabaseTable();
+  renderAuditLogsTable();
 });
