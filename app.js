@@ -8,55 +8,52 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V46_AUTO_HEAL_ALL_BROWSERS';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V36_REAL_PHYSICAL_FILE_PERSISTENCE';
 
-  // Supabase is completely bypassed for active operations per user architectural directive
-  const supabaseClient = null;
+  // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
+  const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
+  const SUPABASE_KEY = window.SUPABASE_KEY || localStorage.getItem('SUPABASE_KEY') || '';
+  let supabaseClient = null;
+
+  if (window.supabase && SUPABASE_URL && SUPABASE_KEY) {
+    try {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      console.log('Supabase Cloud Database (zamqqaiipwatbaubvlpq) Conectado Correctamente');
+    } catch (err) {
+      console.error('Error conectando a Supabase:', err);
+    }
+  }
 
   function initData() {
-    // Clear all obsolete old caches programmatically to force fresh clean load across all browsers
+    // Clear all obsolete old caches to force fresh load of physical file persistence
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && key.startsWith('CEDI_ACTIVE')) {
+        if (key && key.startsWith('CEDI_ACTIVE_VEHICLES') && key !== STORAGE_KEY) {
           localStorage.removeItem(key);
         }
       }
+      localStorage.removeItem('CEDI_VEHICLES_DATA');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V35_PERMANENT_PRINCIPAL_DB_SYNC');
     } catch (e) {}
 
-    // Force load 301 consolidated valid vehicles dataset
-    const saved = localStorage.getItem(STORAGE_KEY);
-    let loadedFromCache = false;
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          vehicles = parsed;
-          loadedFromCache = true;
-        }
-      } catch (e) {}
-    }
+    const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
+      ? window.INITIAL_VEHICLES 
+      : [];
 
-    if (!loadedFromCache || !Array.isArray(vehicles) || vehicles.length === 0) {
-      vehicles = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
-        ? JSON.parse(JSON.stringify(window.INITIAL_VEHICLES))
-        : [];
-    }
+    // Always prefer fresh window.INITIAL_VEHICLES on load to guarantee exact Excel data sync
+    vehicles = initialList;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(vehicles));
 
-    saveDataLocally();
-    console.log("initData auto-healed and loaded vehicles count:", vehicles.length);
+    if (supabaseClient) {
+      syncWithSupabase();
+    }
   }
-
-  // Bypassed Supabase functions preserved dormant for future reference
-  async function fetchVehiclesFromSupabase() { return false; }
-  async function seedSupabaseCloud() { return false; }
-  async function syncWithSupabase() { return false; }
-  async function saveToSupabase() { return false; }
-  async function deleteFromSupabase() { return false; }
 
   async function syncWithSupabase() {
     if (!supabaseClient) return;
     try {
+      // Upsert local active driver records to Supabase to keep cloud database synchronized with the 255 active drivers
       const recordsToUpsert = vehicles.map(v => ({
         id: v.id,
         placa: v.placa,
@@ -64,61 +61,46 @@ document.addEventListener('DOMContentLoaded', () => {
         cedula: v.cedula,
         tipo_vehiculo: v.tipoVehiculo,
         empresa: v.empresa || 'CEDI',
-        centro_distribucion: v.centroDistribucion || 'CD BUCARAMANGA',
+        centro_distribucion: v.centroDistribucion || 'CEDI',
         cargo: v.cargo || 'COLABORADOR',
-        soat_vencimiento: v.soatVencimiento !== 'N/A' ? v.soatVencimiento : null,
-        rtm_vencimiento: v.rtmVencimiento !== 'N/A' ? v.rtmVencimiento : null,
-        licencia_categoria: v.licenciaCategoria || 'SIN CATEGORÍA',
-        licencia_vencimiento: v.licenciaVencimiento !== 'N/A' ? v.licenciaVencimiento : null,
+        soat_vencimiento: v.soatVencimiento || null,
+        rtm_vencimiento: v.rtmVencimiento || null,
+        licencia_categoria: v.licenciaCategoria || 'B1',
+        licencia_vencimiento: v.licenciaVencimiento || null,
         updated_at: new Date().toISOString()
       }));
 
-      let res = await supabaseClient.from('vehicles').upsert(recordsToUpsert, { onConflict: 'id' });
-      if (res.error) {
-        await supabaseClient.from('vehiculos').upsert(recordsToUpsert, { onConflict: 'id' });
+      const { error } = await supabaseClient.from('vehiculos').upsert(recordsToUpsert, { onConflict: 'placa' });
+      if (error) {
+        console.error('Supabase cloud sync error:', error);
+      } else {
+        console.log('Supabase Cloud Database sincronizado exitosamente con los 255 activos');
       }
     } catch (e) {
-      console.error('Supabase sync error:', e);
+      console.error('Supabase fetch error:', e);
     }
   }
 
   async function saveToSupabase(vehicle) {
     if (!supabaseClient) return;
-    const dbObj = {
-      id: vehicle.id,
-      placa: vehicle.placa,
-      nombre: vehicle.nombre,
-      cedula: vehicle.cedula,
-      tipo_vehiculo: vehicle.tipoVehiculo,
-      empresa: vehicle.empresa || 'CEDI',
-      centro_distribucion: vehicle.centroDistribucion || 'CD BUCARAMANGA',
-      cargo: vehicle.cargo || 'COLABORADOR',
-      soat_vencimiento: vehicle.soatVencimiento !== 'N/A' ? vehicle.soatVencimiento : null,
-      rtm_vencimiento: vehicle.rtmVencimiento !== 'N/A' ? vehicle.rtmVencimiento : null,
-      licencia_categoria: vehicle.licenciaCategoria || 'SIN CATEGORÍA',
-      licencia_vencimiento: vehicle.licenciaVencimiento !== 'N/A' ? vehicle.licenciaVencimiento : null,
-      updated_at: new Date().toISOString()
-    };
-
     try {
-      let res = await supabaseClient.from('vehicles').upsert(dbObj, { onConflict: 'id' });
-      if (res.error) {
-        await supabaseClient.from('vehiculos').upsert(dbObj, { onConflict: 'id' });
-      }
+      await supabaseClient.from('vehiculos').upsert({
+        id: vehicle.id,
+        placa: vehicle.placa,
+        nombre: vehicle.nombre,
+        cedula: vehicle.cedula,
+        tipo_vehiculo: vehicle.tipoVehiculo,
+        empresa: vehicle.empresa,
+        centro_distribucion: vehicle.centroDistribucion,
+        cargo: vehicle.cargo,
+        soat_vencimiento: vehicle.soatVencimiento || null,
+        rtm_vencimiento: vehicle.rtmVencimiento || null,
+        licencia_categoria: vehicle.licenciaCategoria,
+        licencia_vencimiento: vehicle.licenciaVencimiento || null,
+        updated_at: new Date().toISOString()
+      });
     } catch (e) {
-      console.error('Error al guardar en Supabase:', e);
-    }
-  }
-
-  async function deleteFromSupabase(vehicleId) {
-    if (!supabaseClient) return;
-    try {
-      let res = await supabaseClient.from('vehicles').delete().eq('id', vehicleId);
-      if (res.error) {
-        await supabaseClient.from('vehiculos').delete().eq('id', vehicleId);
-      }
-    } catch (e) {
-      console.error('Error al eliminar en Supabase:', e);
+      console.error('Error saving to Supabase:', e);
     }
   }
 
@@ -250,6 +232,8 @@ document.addEventListener('DOMContentLoaded', () => {
       saveToSupabase(updatedVehicle);
     }
   }
+
+  initData();
 
   function getTodayDate() {
     const today = new Date();
@@ -799,28 +783,27 @@ document.addEventListener('DOMContentLoaded', () => {
   function populateBadgeDropdownFilters() {
     if (!badgeCdFilter || !badgeEmpresaFilter) return;
 
-    const currentSelectedCd = badgeCdFilter.value || 'ALL';
-    const currentSelectedEmp = badgeEmpresaFilter.value || 'ALL';
-
-    const cds = Array.from(new Set(vehicles.map(v => (v.centroDistribucion || '').toString().trim()))).filter(x => x && x !== '0' && x !== 'N/A' && x !== 'NO APLICA').sort();
-    const empresas = Array.from(new Set(vehicles.map(v => (v.empresa || '').toString().trim()))).filter(x => x && x !== '0' && x !== 'N/A' && x !== 'NO APLICA').sort();
+    const cds = [...new Set(vehicles.map(v => (v.centroDistribucion || 'CEDI').trim()))].sort();
+    const empresas = [...new Set(vehicles.map(v => (v.empresa || 'CEDI').trim()))].sort();
 
     badgeCdFilter.innerHTML = '<option value="ALL">🏢 Todos los CD</option>';
     cds.forEach(cd => {
-      const opt = document.createElement('option');
-      opt.value = cd;
-      opt.textContent = `🏢 CD: ${cd}`;
-      if (cd === currentSelectedCd) opt.selected = true;
-      badgeCdFilter.appendChild(opt);
+      if (cd) {
+        const opt = document.createElement('option');
+        opt.value = cd;
+        opt.textContent = `🏢 CD: ${cd}`;
+        badgeCdFilter.appendChild(opt);
+      }
     });
 
     badgeEmpresaFilter.innerHTML = '<option value="ALL">🏭 Todas las Empresas</option>';
     empresas.forEach(emp => {
-      const opt = document.createElement('option');
-      opt.value = emp;
-      opt.textContent = `🏭 ${emp}`;
-      if (emp === currentSelectedEmp) opt.selected = true;
-      badgeEmpresaFilter.appendChild(opt);
+      if (emp) {
+        const opt = document.createElement('option');
+        opt.value = emp;
+        opt.textContent = `🏭 ${emp}`;
+        badgeEmpresaFilter.appendChild(opt);
+      }
     });
   }
 
@@ -1216,61 +1199,37 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function populateDropdownFilters() {
-    if (!dbCdFilter || !dbEmpresaFilter || !dbLicenciaFilter || !dbTipoFilter) return;
+    if (!dbCdFilter || !dbEmpresaFilter || !dbLicenciaFilter) return;
 
-    console.log("populateDropdownFilters recibio:", vehicles.length, "registros");
-
-    const currentSelectedCd = dbCdFilter.value || currentCdFilter || 'ALL';
-    const currentSelectedEmp = dbEmpresaFilter.value || currentEmpresaFilter || 'ALL';
-    const currentSelectedLic = dbLicenciaFilter.value || currentLicenciaFilter || 'ALL';
-    const currentSelectedTipo = dbTipoFilter.value || currentTipoFilter || 'ALL';
-
-    // 1. CD options (Col X) built DIRECTLY from global vehicles array
-    const cds = Array.from(new Set(vehicles.map(v => (v.centroDistribucion || '').toString().trim()))).filter(x => x && x !== '0' && x !== 'N/A' && x !== 'NO APLICA').sort();
+    // CD options
+    const cds = Array.from(new Set(vehicles.map(v => v.centroDistribucion || 'CEDI'))).filter(Boolean).sort();
     dbCdFilter.innerHTML = '<option value="ALL">🏢 Todos los CD (Col. X)</option>';
     cds.forEach(cd => {
       const opt = document.createElement('option');
       opt.value = cd;
       opt.textContent = cd;
-      if (cd === currentSelectedCd) opt.selected = true;
       dbCdFilter.appendChild(opt);
     });
-    console.log("Opciones agregadas a Todos los CD:", cds.length, cds);
 
-    // 2. Empresa options (Col U) built DIRECTLY from global vehicles array
-    const empresas = Array.from(new Set(vehicles.map(v => (v.empresa || '').toString().trim()))).filter(x => x && x !== '0' && x !== 'N/A' && x !== 'NO APLICA').sort();
+    // Empresa options
+    const empresas = Array.from(new Set(vehicles.map(v => v.empresa || 'CEDI'))).filter(Boolean).sort();
     dbEmpresaFilter.innerHTML = '<option value="ALL">🏭 Todas las Empresas (Col. U)</option>';
     empresas.forEach(emp => {
       const opt = document.createElement('option');
       opt.value = emp;
       opt.textContent = emp;
-      if (emp === currentSelectedEmp) opt.selected = true;
       dbEmpresaFilter.appendChild(opt);
     });
-    console.log("Opciones agregadas a Empresas:", empresas.length, empresas);
 
-    // 3. Licencia options (Col AP/AV) built DIRECTLY from global vehicles array
-    const licencias = Array.from(new Set(vehicles.map(v => (v.licenciaCategoria || '').toString().trim()))).filter(x => x && x !== '0' && x !== 'N/A' && x !== 'NO APLICA').sort();
-    dbLicenciaFilter.innerHTML = '<option value="ALL">🪪 Todas las Licencias (Col. AP/AV)</option>';
+    // Licencia options
+    const licencias = Array.from(new Set(vehicles.map(v => v.licenciaCategoria || 'SIN CATEGORÍA'))).filter(Boolean).sort();
+    dbLicenciaFilter.innerHTML = '<option value="ALL">🪪 Todas las Licencias (Col. AP)</option>';
     licencias.forEach(lic => {
       const opt = document.createElement('option');
       opt.value = lic;
       opt.textContent = `Cat: ${lic}`;
-      if (lic === currentSelectedLic) opt.selected = true;
       dbLicenciaFilter.appendChild(opt);
     });
-
-    // 4. Tipo de Vehículo options built DIRECTLY from global vehicles array
-    const tipos = Array.from(new Set(vehicles.map(v => (v.tipoVehiculo || '').toString().trim()))).filter(Boolean).sort();
-    dbTipoFilter.innerHTML = '<option value="ALL">🛵🚗 Todos los Tipos</option>';
-    tipos.forEach(t => {
-      const opt = document.createElement('option');
-      opt.value = t;
-      opt.textContent = t;
-      if (t === currentSelectedTipo) opt.selected = true;
-      dbTipoFilter.appendChild(opt);
-    });
-    console.log("Opciones agregadas a Tipo de Vehiculo:", tipos.length, tipos);
   }
 
   function getBaseFilteredVehicles() {
@@ -1301,8 +1260,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateFilterCounts() {
     const baseSet = getBaseFilteredVehicles();
-    console.log("updateKPIs cantidad de registros en memoria (vehicles):", vehicles.length, "| registros filtrados para indicadores:", baseSet.length);
-
     let vigentesCount = 0;
     let porVencerCount = 0;
     let vencidosCount = 0;
@@ -1358,16 +1315,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const filtered = getFilteredVehicles();
     const total = filtered.length;
 
-    console.log("renderDatabaseTable recibio:", filtered.length, "vehiculos filtrados para renderizar.");
-
     const totalPages = Math.ceil(total / pageSize) || 1;
     if (currentPage > totalPages) currentPage = totalPages;
 
     const startIdx = (currentPage - 1) * pageSize;
     const endIdx = Math.min(startIdx + pageSize, total);
     const pageItems = filtered.slice(startIdx, endIdx);
-
-    console.log("Cantidad de filas renderizadas en la pagina actual:", pageItems.length);
 
     document.getElementById('pageStart').textContent = total === 0 ? 0 : startIdx + 1;
     document.getElementById('pageEnd').textContent = endIdx;
@@ -2010,71 +1963,18 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         });
 
-        const incomingRecords = Array.from(dedupedRecordsMap.values());
+        const newRecords = Array.from(dedupedRecordsMap.values());
 
-        if (incomingRecords.length === 0) {
+        if (newRecords.length === 0) {
           alert("⚠️ No se encontraron registros válidos de conductores activos ni exentos en el archivo subido. Se conserva la versión anterior.");
           return;
         }
 
-        // -------------------------------------------------------------------------
-        // SMART SYNC WITH EXISTING SUPABASE / ACTIVE DATASET
-        // -------------------------------------------------------------------------
-        let addedCount = 0;
-        let updatedCount = 0;
-
-        const mergedVehiclesMap = new Map();
-
-        // 1. Keep existing vehicles that were not deleted by admin
-        vehicles.forEach(v => {
-          const k = `${v.cedula}_${v.tipoVehiculo}`;
-          if (!deletedVehicleKeysSet.has(k) && !deletedVehicleKeysSet.has(`${v.cedula}_${v.placa}`)) {
-            mergedVehiclesMap.set(k, v);
-          }
-        });
-
-        // 2. Process incoming records from new Excel file
-        incomingRecords.forEach(incRecord => {
-          const k = `${incRecord.cedula}_${incRecord.tipoVehiculo}`;
-
-          // Skip if deleted by Admin
-          if (deletedVehicleKeysSet.has(k) || deletedVehicleKeysSet.has(`${incRecord.cedula}_${incRecord.placa}`)) {
-            return;
-          }
-
-          if (mergedVehiclesMap.has(k)) {
-            // Existing record: SMART UPDATE non-manual fields
-            const curr = mergedVehiclesMap.get(k);
-            const ov = manualOverridesMap.get(k);
-
-            const mergedObj = {
-              ...curr,
-              nombre: incRecord.nombre || curr.nombre,
-              empresa: incRecord.empresa || curr.empresa,
-              centroDistribucion: incRecord.centroDistribucion || curr.centroDistribucion,
-              cargo: incRecord.cargo || curr.cargo,
-              // Keep manual plate/dates if manually edited, otherwise update with new survey data
-              placa: (ov && ov.placa) ? curr.placa : incRecord.placa,
-              soatVencimiento: (ov && ov.soatVencimiento) ? curr.soatVencimiento : incRecord.soatVencimiento,
-              rtmVencimiento: (ov && ov.rtmVencimiento) ? curr.rtmVencimiento : incRecord.rtmVencimiento,
-              licenciaCategoria: (ov && ov.licenciaCategoria) ? curr.licenciaCategoria : incRecord.licenciaCategoria,
-              licenciaVencimiento: (ov && ov.licenciaVencimiento) ? curr.licenciaVencimiento : incRecord.licenciaVencimiento
-            };
-            mergedVehiclesMap.set(k, mergedObj);
-            updatedCount++;
-          } else {
-            // New record: INSERT
-            mergedVehiclesMap.set(k, incRecord);
-            addedCount++;
-          }
-        });
-
-        vehicles = Array.from(mergedVehiclesMap.values());
+        vehicles = newRecords;
         saveData();
-
-        alert(`✅ ¡Sincronización Inteligente de Base de Datos finalizada exitosamente!\n\n- Total Vehículos en Base de Datos: ${vehicles.length}\n- Registros Nuevos Agregados: ${addedCount}\n- Registros Existentes Actualizados: ${updatedCount}\n- Personal Activo Geovictoria Validado: ${activeCount}\n- Exenciones Aplicadas (ABI/HONOR/RENTAS): ${exemptCount}\n- Registros Duplicados / Inválidos Filtrados: ${duplicatesFiltered}`);
+        alert(`✅ ¡Base de datos de vehículos cargada exitosamente!\n\n- Total vehículos procesados: ${newRecords.length}\n- Personal Activo Geovictoria: ${activeCount}\n- Exenciones (ABI/HONOR/RENTAS): ${exemptCount}\n- Roles no conductores ignorados: ${ignoredRoleCount}\n- Duplicados Filtrados: ${duplicatesFiltered}`);
       } catch (err) {
-        alert("❌ Error al procesar la sincronización inteligente: " + err.message + "\nSe conservará la última versión válida de la base de datos.");
+        alert("❌ Error al procesar el archivo Excel: " + err.message + "\nSe conservará la última versión válida de la base de datos.");
       }
     };
     reader.readAsArrayBuffer(file);
@@ -2216,14 +2116,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const exportMainDbExcelBtn = document.getElementById('exportMainDbExcelBtn');
-  if (exportMainDbExcelBtn) {
-    exportMainDbExcelBtn.addEventListener('click', () => {
-      exportSynchronizedExcel();
-      alert("✅ Base de datos exportada exitosamente desde la base de datos principal activa.");
-    });
-  }
-
   // Hook up audit log in excelFileInput
   const excelInputEl = document.getElementById('excelFileInput');
   if (excelInputEl) {
@@ -2248,7 +2140,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Initial render - Synchronously load active vehicles dataset and render UI!
+  // Initial render - Load vehicles data first!
   initData();
   updateKPIs();
   populateDropdownFilters();
