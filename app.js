@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V36_REAL_PHYSICAL_FILE_PERSISTENCE';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V47_PERSISTENT_DELETIONS_FIX';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -24,8 +24,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Persistent Registries for Admin Deletions & Manual Overrides
+  const STORAGE_KEY_DELETIONS = 'CEDI_DELETED_KEYS_V1';
+  const STORAGE_KEY_OVERRIDES = 'CEDI_MANUAL_OVERRIDES_V1';
+
+  let deletedVehicleKeysSet = new Set();
+  let manualOverridesMap = new Map();
+
+  try {
+    const savedDeletions = localStorage.getItem(STORAGE_KEY_DELETIONS);
+    if (savedDeletions) deletedVehicleKeysSet = new Set(JSON.parse(savedDeletions));
+  } catch (e) {}
+
+  try {
+    const savedOverrides = localStorage.getItem(STORAGE_KEY_OVERRIDES);
+    if (savedOverrides) manualOverridesMap = new Map(JSON.parse(savedOverrides));
+  } catch (e) {}
+
+  function saveModificationsRegistry() {
+    try {
+      localStorage.setItem(STORAGE_KEY_DELETIONS, JSON.stringify(Array.from(deletedVehicleKeysSet)));
+      localStorage.setItem(STORAGE_KEY_OVERRIDES, JSON.stringify(Array.from(manualOverridesMap.entries())));
+    } catch (e) {}
+  }
+
   function initData() {
-    // Clear all obsolete old caches to force fresh load of physical file persistence
+    // Clear all obsolete old caches to force fresh load
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -37,12 +61,52 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V35_PERMANENT_PRINCIPAL_DB_SYNC');
     } catch (e) {}
 
-    const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
-      ? window.INITIAL_VEHICLES 
-      : [];
+    // First: Load saved vehicles from localStorage if available
+    let rawList = [];
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          rawList = parsed;
+        }
+      } catch (e) {}
+    }
 
-    // Always prefer fresh window.INITIAL_VEHICLES on load to guarantee exact Excel data sync
-    vehicles = initialList;
+    // Fallback to window.INITIAL_VEHICLES if localStorage is empty
+    if (!rawList || rawList.length === 0) {
+      rawList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
+        ? JSON.parse(JSON.stringify(window.INITIAL_VEHICLES)) 
+        : [];
+    }
+
+    // STRICT RULE: Purge any vehicles that were explicitly deleted by Admin!
+    vehicles = rawList.filter(v => {
+      const cleanCedula = (v.cedula || '').toString().replace(/\D/g, '');
+      const cleanPlaca = (v.placa || '').toString().toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const keyCedulaTipo = `${cleanCedula}_${v.tipoVehiculo}`;
+      const keyCedulaPlaca = `${cleanCedula}_${cleanPlaca}`;
+      
+      if (deletedVehicleKeysSet.has(keyCedulaTipo) || deletedVehicleKeysSet.has(keyCedulaPlaca)) {
+        return false;
+      }
+      return true;
+    });
+
+    // Apply any manual Admin overrides (edits to placa, SOAT, RTM, Licencia)
+    vehicles.forEach(v => {
+      const cleanCedula = (v.cedula || '').toString().replace(/\D/g, '');
+      const key = `${cleanCedula}_${v.tipoVehiculo}`;
+      const ov = manualOverridesMap.get(key);
+      if (ov) {
+        if (ov.placa) v.placa = ov.placa;
+        if (ov.soatVencimiento) v.soatVencimiento = ov.soatVencimiento;
+        if (ov.rtmVencimiento) v.rtmVencimiento = ov.rtmVencimiento;
+        if (ov.licenciaCategoria) v.licenciaCategoria = ov.licenciaCategoria;
+        if (ov.licenciaVencimiento) v.licenciaVencimiento = ov.licenciaVencimiento;
+      }
+    });
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(vehicles));
 
     if (supabaseClient) {
@@ -153,30 +217,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     auditLogs.unshift(logEntry);
     saveAuditLogs();
-  }
-
-  // Persistent Registries for Admin Deletions & Manual Overrides
-  const STORAGE_KEY_DELETIONS = 'CEDI_DELETED_KEYS_V1';
-  const STORAGE_KEY_OVERRIDES = 'CEDI_MANUAL_OVERRIDES_V1';
-
-  let deletedVehicleKeysSet = new Set();
-  let manualOverridesMap = new Map();
-
-  try {
-    const savedDeletions = localStorage.getItem(STORAGE_KEY_DELETIONS);
-    if (savedDeletions) deletedVehicleKeysSet = new Set(JSON.parse(savedDeletions));
-  } catch (e) {}
-
-  try {
-    const savedOverrides = localStorage.getItem(STORAGE_KEY_OVERRIDES);
-    if (savedOverrides) manualOverridesMap = new Map(JSON.parse(savedOverrides));
-  } catch (e) {}
-
-  function saveModificationsRegistry() {
-    try {
-      localStorage.setItem(STORAGE_KEY_DELETIONS, JSON.stringify(Array.from(deletedVehicleKeysSet)));
-      localStorage.setItem(STORAGE_KEY_OVERRIDES, JSON.stringify(Array.from(manualOverridesMap.entries())));
-    } catch (e) {}
   }
 
   window.activeExcelFileHandle = null;
