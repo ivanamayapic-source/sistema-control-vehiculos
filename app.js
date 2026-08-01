@@ -2304,7 +2304,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Initial render - Load vehicles data first!
+  // Initial render - Set default role to Vigilancia and load vehicles data!
+  setRole('VIGILANCIA');
   initData();
   updateKPIs();
   populateDropdownFilters();
