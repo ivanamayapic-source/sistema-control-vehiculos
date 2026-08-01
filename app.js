@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V31_DELETE_BUTTON_ADDED';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V32_GATEWAY_ACCESS_MODES';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of delete button feature
+    // Clear all obsolete old caches to force fresh load of gateway access modes
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       localStorage.removeItem('CEDI_VEHICLES_DATA');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V30_STRICT_DISCARD_INVALID_PLATES');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V31_DELETE_BUTTON_ADDED');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
@@ -201,8 +201,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --------------------------------------------------------------------------
-  // 3. NAVIGATION & TABS MANAGEMENT
+  // 3. NAVIGATION & TABS MANAGEMENT WITH ROLE ACCESS CONTROL
   // --------------------------------------------------------------------------
+  let currentUserRole = null; // 'VIGILANCIA' or 'ADMIN'
+
   const tabs = {
     vigilancia: document.getElementById('tab-vigilancia'),
     carnets: document.getElementById('tab-carnets'),
@@ -214,6 +216,103 @@ document.addEventListener('DOMContentLoaded', () => {
     carnets: document.getElementById('view-carnets'),
     database: document.getElementById('view-database')
   };
+
+  const viewLandingGateway = document.getElementById('view-landing-gateway');
+  const btnSelectVigilancia = document.getElementById('btnSelectVigilancia');
+  const btnSelectAdmin = document.getElementById('btnSelectAdmin');
+
+  const adminAuthModal = document.getElementById('adminAuthModal');
+  const adminAuthForm = document.getElementById('adminAuthForm');
+  const adminAuthError = document.getElementById('adminAuthError');
+  const closeAdminAuthBtn = document.getElementById('closeAdminAuthBtn');
+  const cancelAdminAuthBtn = document.getElementById('cancelAdminAuthBtn');
+  const adminUser = document.getElementById('adminUser');
+  const adminPass = document.getElementById('adminPass');
+
+  const btnHeaderRoleSwitch = document.getElementById('btnHeaderRoleSwitch');
+  const headerRoleBadgeText = document.getElementById('headerRoleBadgeText');
+
+  function setRole(role) {
+    currentUserRole = role;
+    if (role === 'VIGILANCIA') {
+      if (headerRoleBadgeText) headerRoleBadgeText.textContent = 'Módulo Vigilancia (Solo Consulta)';
+      if (btnHeaderRoleSwitch) {
+        btnHeaderRoleSwitch.className = "bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs px-3.5 py-2 rounded-xl font-bold transition-all flex items-center gap-2 shadow-md";
+        btnHeaderRoleSwitch.innerHTML = `<i class="fa-solid fa-shield-cat text-amber-400"></i> <span>Módulo Vigilancia (Solo Consulta)</span> <span class="bg-amber-500 text-slate-950 text-[10px] px-1.5 py-0.5 rounded font-extrabold ml-1">Cambiar / Admin</span>`;
+      }
+      document.querySelectorAll('.admin-lock-icon').forEach(el => el.classList.remove('hidden'));
+      switchTab('vigilancia');
+    } else if (role === 'ADMIN') {
+      if (headerRoleBadgeText) headerRoleBadgeText.textContent = 'Modo Administrador';
+      if (btnHeaderRoleSwitch) {
+        btnHeaderRoleSwitch.className = "bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-sky-400 text-xs px-3.5 py-2 rounded-xl font-bold transition-all flex items-center gap-2 shadow-md";
+        btnHeaderRoleSwitch.innerHTML = `<i class="fa-solid fa-user-shield text-sky-400"></i> <span>Modo Administrador</span> <span class="bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded font-extrabold ml-1">Salir Admin</span>`;
+      }
+      document.querySelectorAll('.admin-lock-icon').forEach(el => el.classList.add('hidden'));
+    }
+    if (viewLandingGateway) viewLandingGateway.classList.add('hidden');
+    if (adminAuthModal) adminAuthModal.classList.add('hidden');
+  }
+
+  // Option 1: Control de Vigilancia (QR) - Direct Access (No Password Required)
+  if (btnSelectVigilancia) {
+    btnSelectVigilancia.addEventListener('click', () => {
+      setRole('VIGILANCIA');
+    });
+  }
+
+  // Option 2: Administración - Requires Auth
+  if (btnSelectAdmin) {
+    btnSelectAdmin.addEventListener('click', () => {
+      openAdminAuthModal();
+    });
+  }
+
+  if (btnHeaderRoleSwitch) {
+    btnHeaderRoleSwitch.addEventListener('click', () => {
+      if (currentUserRole === 'ADMIN') {
+        setRole('VIGILANCIA');
+      } else {
+        openAdminAuthModal();
+      }
+    });
+  }
+
+  function openAdminAuthModal() {
+    if (adminAuthError) adminAuthError.classList.add('hidden');
+    if (adminUser) adminUser.value = '';
+    if (adminPass) adminPass.value = '';
+    if (adminAuthModal) adminAuthModal.classList.remove('hidden');
+  }
+
+  function closeAdminAuthModal() {
+    if (adminAuthModal) adminAuthModal.classList.add('hidden');
+  }
+
+  if (closeAdminAuthBtn) closeAdminAuthBtn.addEventListener('click', closeAdminAuthModal);
+  if (cancelAdminAuthBtn) cancelAdminAuthBtn.addEventListener('click', closeAdminAuthModal);
+
+  if (adminAuthForm) {
+    adminAuthForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const u = (adminUser ? adminUser.value : '').trim().toLowerCase();
+      const p = (adminPass ? adminPass.value : '').trim();
+
+      if ((u === 'admin' && p === 'admin') || (u === 'admin' && p === 'admin123') || (u === 'admin' && p === 'cedi2026') || p === 'admin') {
+        setRole('ADMIN');
+      } else {
+        if (adminAuthError) adminAuthError.classList.remove('hidden');
+      }
+    });
+  }
+
+  function requestAdminAccess(targetTab) {
+    if (currentUserRole === 'ADMIN') {
+      switchTab(targetTab);
+    } else {
+      openAdminAuthModal();
+    }
+  }
 
   function switchTab(targetTab) {
     Object.keys(tabs).forEach(key => {
@@ -234,8 +333,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   tabs.vigilancia.addEventListener('click', () => switchTab('vigilancia'));
-  tabs.carnets.addEventListener('click', () => switchTab('carnets'));
-  tabs.database.addEventListener('click', () => switchTab('database'));
+  tabs.carnets.addEventListener('click', () => requestAdminAccess('carnets'));
+  tabs.database.addEventListener('click', () => requestAdminAccess('database'));
 
   // --------------------------------------------------------------------------
   // 4. KPI STATS UPDATER
@@ -1206,6 +1305,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
 
   function openDeleteModal(id) {
+    if (currentUserRole !== 'ADMIN') {
+      openAdminAuthModal();
+      return;
+    }
     const v = vehicles.find(x => x.id === id);
     if (!v) return;
     vehicleToDeleteId = id;
@@ -1284,6 +1387,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const vehicleForm = document.getElementById('vehicleForm');
 
   function openEditModal(vehicleId = null) {
+    if (currentUserRole !== 'ADMIN') {
+      openAdminAuthModal();
+      return;
+    }
     editModal.classList.remove('hidden');
     
     if (vehicleId) {
@@ -1413,6 +1520,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('excelFileInput').addEventListener('change', (e) => {
+    if (currentUserRole !== 'ADMIN') {
+      openAdminAuthModal();
+      e.target.value = '';
+      return;
+    }
     const file = e.target.files[0];
     if (!file) return;
 

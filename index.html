@@ -59,26 +59,35 @@
         </div>
       </div>
 
-      <!-- Live KPI Badges -->
-      <div class="hidden lg:flex items-center gap-3 text-xs font-semibold">
-        <div class="bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-2">
-          <span class="text-slate-400">Total:</span>
-          <span id="kpiTotal" class="text-white font-bold text-sm">0</span>
-        </div>
-        <div class="bg-emerald-950/50 border border-emerald-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2 text-emerald-400">
-          <i class="fa-solid fa-circle-check"></i>
-          <span>Vigentes:</span>
-          <span id="kpiVigentes" class="font-bold text-sm">0</span>
-        </div>
-        <div class="bg-amber-950/50 border border-amber-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2 text-amber-400">
-          <i class="fa-solid fa-triangle-exclamation"></i>
-          <span>Por Vencer:</span>
-          <span id="kpiPorVencer" class="font-bold text-sm">0</span>
-        </div>
-        <div class="bg-rose-950/50 border border-rose-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2 text-rose-400">
-          <i class="fa-solid fa-circle-xmark"></i>
-          <span>Vencidos:</span>
-          <span id="kpiVencidos" class="font-bold text-sm">0</span>
+      <!-- Module Access Badge & Role Switcher -->
+      <div class="flex items-center gap-3">
+        <button id="btnHeaderRoleSwitch" class="bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs px-3.5 py-2 rounded-xl font-bold transition-all flex items-center gap-2 shadow-md">
+          <i class="fa-solid fa-shield-cat text-amber-400"></i>
+          <span id="headerRoleBadgeText">Módulo Vigilancia (Solo Consulta)</span>
+          <span class="bg-amber-500 text-slate-950 text-[10px] px-1.5 py-0.5 rounded font-extrabold ml-1">Cambiar / Admin</span>
+        </button>
+
+        <!-- Live KPI Badges -->
+        <div class="hidden lg:flex items-center gap-3 text-xs font-semibold">
+          <div class="bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-2">
+            <span class="text-slate-400">Total:</span>
+            <span id="kpiTotal" class="text-white font-bold text-sm">0</span>
+          </div>
+          <div class="bg-emerald-950/50 border border-emerald-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2 text-emerald-400">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Vigentes:</span>
+            <span id="kpiVigentes" class="font-bold text-sm">0</span>
+          </div>
+          <div class="bg-amber-950/50 border border-amber-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2 text-amber-400">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>Por Vencer:</span>
+            <span id="kpiPorVencer" class="font-bold text-sm">0</span>
+          </div>
+          <div class="bg-rose-950/50 border border-rose-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2 text-rose-400">
+            <i class="fa-solid fa-circle-xmark"></i>
+            <span>Vencidos:</span>
+            <span id="kpiVencidos" class="font-bold text-sm">0</span>
+          </div>
         </div>
       </div>
     </div>
@@ -91,13 +100,15 @@
             <i class="fa-solid fa-camera font-lg"></i>
             <span>Control de Vigilancia (QR)</span>
           </button>
-          <button id="tab-carnets" class="nav-tab text-sm font-semibold py-3 px-4 rounded-lg flex items-center gap-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all whitespace-nowrap">
+          <button id="tab-carnets" class="nav-tab text-sm font-semibold py-3 px-4 rounded-lg flex items-center gap-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all whitespace-nowrap admin-only-tab">
             <i class="fa-solid fa-id-card font-lg"></i>
             <span>Estudio de Carnetización</span>
+            <i class="fa-solid fa-lock text-[10px] text-amber-400 ml-1 admin-lock-icon"></i>
           </button>
-          <button id="tab-database" class="nav-tab text-sm font-semibold py-3 px-4 rounded-lg flex items-center gap-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all whitespace-nowrap">
+          <button id="tab-database" class="nav-tab text-sm font-semibold py-3 px-4 rounded-lg flex items-center gap-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all whitespace-nowrap admin-only-tab">
             <i class="fa-solid fa-database font-lg"></i>
             <span>Base de Datos y Renovaciones</span>
+            <i class="fa-solid fa-lock text-[10px] text-amber-400 ml-1 admin-lock-icon"></i>
           </button>
         </nav>
       </div>
@@ -665,6 +676,123 @@
     </div>
   </div>
 
+  <!-- PANTALLA INICIAL: SELECCIÓN DE MÓDULO (GATEWAY) -->
+  <div id="view-landing-gateway" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="max-w-4xl w-full space-y-8 text-center animate-fade-in">
+      
+      <!-- Brand Header -->
+      <div class="space-y-3">
+        <img src="logo.png" alt="Logística Conectamos MAZ" class="h-16 mx-auto object-contain bg-slate-900 px-5 py-2.5 rounded-2xl border border-slate-700/80 shadow-2xl">
+        <h1 class="font-outfit font-extrabold text-2xl sm:text-4xl text-white tracking-tight">
+          SISTEMA DE CONTROL Y CARNETIZACIÓN VEHICULAR
+        </h1>
+        <p class="text-slate-400 text-sm sm:text-base max-w-xl mx-auto">
+          Centro de Distribución CEDI — Seleccione el módulo de acceso para continuar
+        </p>
+      </div>
+
+      <!-- 2 Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+        
+        <!-- Option 1: Control de Vigilancia (QR) -->
+        <div id="btnSelectVigilancia" class="group bg-slate-900/90 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/50 p-8 rounded-3xl cursor-pointer transition-all duration-300 shadow-2xl hover:shadow-amber-500/10 text-left relative overflow-hidden flex flex-col justify-between">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/15 transition-all"></div>
+          <div>
+            <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-2xl mb-5 group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-camera-retro"></i>
+            </div>
+            <span class="inline-block px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 mb-3">
+              Acceso Directo (Sin Clave)
+            </span>
+            <h3 class="font-outfit font-extrabold text-xl text-white group-hover:text-amber-400 transition-colors">
+              Control de Vigilancia (QR)
+            </h3>
+            <p class="text-slate-400 text-xs mt-2 leading-relaxed">
+              Módulo operativo de portería. Permite únicamente escanear códigos QR y consultar el estado de SOAT, RTM, Licencias e ingreso vehicular en tiempo real.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-bold text-amber-400 group-hover:translate-x-1 transition-transform">
+            <span>Ingresar a Vigilancia</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </div>
+        </div>
+
+        <!-- Option 2: Administración -->
+        <div id="btnSelectAdmin" class="group bg-slate-900/90 hover:bg-slate-900 border border-slate-800 hover:border-sky-500/50 p-8 rounded-3xl cursor-pointer transition-all duration-300 shadow-2xl hover:shadow-sky-500/10 text-left relative overflow-hidden flex flex-col justify-between">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-sky-500/5 rounded-full blur-2xl group-hover:bg-sky-500/15 transition-all"></div>
+          <div>
+            <div class="w-14 h-14 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 text-2xl mb-5 group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-user-shield"></i>
+            </div>
+            <span class="inline-block px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-sky-500/10 text-sky-400 border border-sky-500/30 mb-3">
+              Requiere Autenticación
+            </span>
+            <h3 class="font-outfit font-extrabold text-xl text-white group-hover:text-sky-400 transition-colors">
+              Administración
+            </h3>
+            <p class="text-slate-400 text-xs mt-2 leading-relaxed">
+              Acceso completo a Base de Datos, Importación/Actualización de Excel, Renovación de Documentos, Edición, Eliminación de Registros y Carnetización.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-bold text-sky-400 group-hover:translate-x-1 transition-transform">
+            <span>Iniciar Sesión Admin</span>
+            <i class="fa-solid fa-lock"></i>
+          </div>
+        </div>
+
+      </div>
+
+      <p class="text-xs text-slate-500">© 2026 Centro de Distribución — Seguridad Vial y Control de Accesos</p>
+    </div>
+  </div>
+
+  <!-- MODAL DE AUTENTICACIÓN DE ADMINISTRACIÓN -->
+  <div id="adminAuthModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-fade-in">
+      <div class="p-6 border-b border-slate-800 flex items-center justify-between">
+        <h3 class="font-outfit font-bold text-lg text-white flex items-center gap-2">
+          <i class="fa-solid fa-user-shield text-sky-400"></i> Autenticación de Administrador
+        </h3>
+        <button id="closeAdminAuthBtn" class="text-slate-400 hover:text-white text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      
+      <form id="adminAuthForm" class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Usuario</label>
+          <div class="relative">
+            <i class="fa-solid fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+            <input type="text" id="adminUser" required placeholder="admin"
+                   class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-3 py-2.5 text-sm text-white focus:border-sky-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Contraseña</label>
+          <div class="relative">
+            <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+            <input type="password" id="adminPass" required placeholder="••••••••"
+                   class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-3 py-2.5 text-sm text-white focus:border-sky-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div id="adminAuthError" class="hidden text-xs text-rose-400 bg-rose-950/50 border border-rose-500/30 p-2.5 rounded-xl font-medium text-center">
+          Usuario o contraseña incorrectos.
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-3">
+          <button type="button" id="cancelAdminAuthBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-4 py-2 rounded-xl text-sm transition-all">
+            Cancelar
+          </button>
+          <button type="submit" class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-lg shadow-sky-600/20 flex items-center gap-2">
+            <i class="fa-solid fa-right-to-bracket"></i> Ingresar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- FOOTER -->
   <footer class="no-print border-t border-slate-800 bg-slate-950 py-4 text-center text-xs text-slate-500">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
@@ -674,7 +802,7 @@
   </footer>
 
   <!-- Scripts -->
-  <script src="data.js?v=v31_delete_button_added"></script>
-  <script src="app.js?v=v31_delete_button_added"></script>
+  <script src="data.js?v=v32_gateway_access_modes"></script>
+  <script src="app.js?v=v32_gateway_access_modes"></script>
 </body>
 </html>
