@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V26_FULL_DISCOVERY_348';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V27_PLATE_NORMALIZED';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of full vehicle discovery dataset
+    // Clear all obsolete old caches to force fresh load of plate normalized dataset
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       localStorage.removeItem('CEDI_VEHICLES_DATA');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V25_DYNAMIC_PERMANENT_RULES');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V26_FULL_DISCOVERY_348');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
@@ -1519,12 +1519,13 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           targetVehicles.forEach((tv) => {
-            let placa = placaBase;
-            if (!placa || placa === '0' || placa === 'N/A' || placa === 'NO APLICA' || placa === 'VVV') {
-              placa = `CC-${cleanCedula}-${tv.tipoVehiculo}`;
+            const cleanPlaca = placaBase.replace(/[^A-Z0-9]/g, '');
+            let displayPlaca = cleanPlaca;
+            if (!cleanPlaca || cleanPlaca === '0' || cleanPlaca === 'NOAPLICA' || cleanPlaca === 'VVV' || cleanPlaca === 'NA') {
+              displayPlaca = `CC-${cleanCedula}-${tv.tipoVehiculo}`;
             }
 
-            const dedupKey = `${cleanCedula}_${tv.tipoVehiculo}_${placa}`;
+            const dedupKey = `${cleanCedula}_${tv.tipoVehiculo}_${displayPlaca}`;
             if (dedupedRecordsMap.has(dedupKey)) {
               duplicatesFiltered++;
               return;
@@ -1532,7 +1533,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             dedupedRecordsMap.set(dedupKey, {
               id: (dedupedRecordsMap.size + 1).toString(),
-              placa,
+              placa: displayPlaca,
               nombre,
               cedula: cleanCedula,
               tipoVehiculo: tv.tipoVehiculo,
