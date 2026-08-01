@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. STATE & DATA INITIALIZATION
   // --------------------------------------------------------------------------
   let vehicles = [];
-  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V35_PERMANENT_PRINCIPAL_DB_SYNC';
+  const STORAGE_KEY = 'CEDI_ACTIVE_VEHICLES_V36_REAL_PHYSICAL_FILE_PERSISTENCE';
 
   // Supabase Cloud Sync Configuration (Project ID: zamqqaiipwatbaubvlpq)
   const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL') || 'https://zamqqaiipwatbaubvlpq.supabase.co';
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initData() {
-    // Clear all obsolete old caches to force fresh load of principal DB sync features
+    // Clear all obsolete old caches to force fresh load of physical file persistence
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       localStorage.removeItem('CEDI_VEHICLES_DATA');
-      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V34_SYNC_AND_AUDIT_LOGS');
+      localStorage.removeItem('CEDI_ACTIVE_VEHICLES_V35_PERMANENT_PRINCIPAL_DB_SYNC');
     } catch (e) {}
 
     const initialList = (Array.isArray(window.INITIAL_VEHICLES) && window.INITIAL_VEHICLES.length > 0) 
@@ -155,8 +155,70 @@ document.addEventListener('DOMContentLoaded', () => {
     saveAuditLogs();
   }
 
+  // Persistent Registries for Admin Deletions & Manual Overrides
+  const STORAGE_KEY_DELETIONS = 'CEDI_DELETED_KEYS_V1';
+  const STORAGE_KEY_OVERRIDES = 'CEDI_MANUAL_OVERRIDES_V1';
+
+  let deletedVehicleKeysSet = new Set();
+  let manualOverridesMap = new Map();
+
+  try {
+    const savedDeletions = localStorage.getItem(STORAGE_KEY_DELETIONS);
+    if (savedDeletions) deletedVehicleKeysSet = new Set(JSON.parse(savedDeletions));
+  } catch (e) {}
+
+  try {
+    const savedOverrides = localStorage.getItem(STORAGE_KEY_OVERRIDES);
+    if (savedOverrides) manualOverridesMap = new Map(JSON.parse(savedOverrides));
+  } catch (e) {}
+
+  function saveModificationsRegistry() {
+    try {
+      localStorage.setItem(STORAGE_KEY_DELETIONS, JSON.stringify(Array.from(deletedVehicleKeysSet)));
+      localStorage.setItem(STORAGE_KEY_OVERRIDES, JSON.stringify(Array.from(manualOverridesMap.entries())));
+    } catch (e) {}
+  }
+
+  window.activeExcelFileHandle = null;
+
+  async function writePhysicalExcelFile() {
+    if (window.activeExcelFileHandle) {
+      try {
+        const dataToExport = vehicles.map(v => ({
+          'PLACA': v.placa,
+          'NOMBRE COMPLETO Y APELLIDOS': v.nombre,
+          'CEDULA (SIN PUNTOS)': v.cedula,
+          'TIPO DE VEHICULO': v.tipoVehiculo,
+          'EMPRESA': v.empresa,
+          'CENTRO DE DISTRIBUCION': v.centroDistribucion || 'CEDI BUCARAMANGA',
+          'POSICIONES': v.cargo,
+          'FECHA VENCIMIENTO SOAT': v.soatVencimiento,
+          'FECHA VENCIMIENTO RTM': v.rtmVencimiento,
+          'CATEGORIA LICENCIA': v.licenciaCategoria,
+          'FECHA VENCIMIENTO LICENCIA': v.licenciaVencimiento,
+          'ESTADO DOCUMENTOS': getVehicleOverallStatus(v)
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "BASE_DATOS_OFICIAL_CEDI");
+        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+
+        const writable = await window.activeExcelFileHandle.createWritable();
+        await writable.write(excelBuffer);
+        await writable.close();
+        console.log('✅ Archivo Excel principal actualizado físicamente en disco duro.');
+        return true;
+      } catch (err) {
+        console.warn('Escritura física directa no soportada o denegada:', err);
+      }
+    }
+    return false;
+  }
+
   function saveDataLocally() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(vehicles));
+    saveModificationsRegistry();
     updateKPIs();
     populateDropdownFilters();
     renderDatabaseTable();
@@ -165,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function saveData(updatedVehicle = null) {
     saveDataLocally();
+    writePhysicalExcelFile();
     if (updatedVehicle && supabaseClient) {
       saveToSupabase(updatedVehicle);
     }
@@ -1397,6 +1460,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       createBackupSnapshot();
       if (targetVehicle) {
+        deletedVehicleKeysSet.add(`${targetVehicle.cedula}_${targetVehicle.tipoVehiculo}`);
+        deletedVehicleKeysSet.add(`${targetVehicle.cedula}_${targetVehicle.placa}`);
+        saveModificationsRegistry();
         logAdminAction('ELIMINAR', targetVehicle, 'REGISTRO_COMPLETO', targetVehicle.placa, 'ELIMINADO_DE_APLICACION');
       }
 
@@ -1510,7 +1576,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (oldV.licenciaCategoria !== licCat) logAdminAction('EDITAR', oldV, 'CATEGORIA_LICENCIA', oldV.licenciaCategoria, licCat);
         if (oldV.placa !== placa) logAdminAction('EDITAR', oldV, 'PLACA', oldV.placa, placa);
 
-        vehicles[idx] = {
+        const updatedObj = {
           ...vehicles[idx],
           placa,
           tipoVehiculo: tipo,
@@ -1522,6 +1588,9 @@ document.addEventListener('DOMContentLoaded', () => {
           licenciaCategoria: licCat,
           licenciaVencimiento: licVenc
         };
+        vehicles[idx] = updatedObj;
+        manualOverridesMap.set(`${cedula}_${tipo}`, updatedObj);
+        saveModificationsRegistry();
       }
     } else {
       // Check if a vehicle with the exact same cedula already exists (strict deduplication)
@@ -1536,7 +1605,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (oldV.licenciaCategoria !== licCat) logAdminAction('EDITAR', oldV, 'CATEGORIA_LICENCIA', oldV.licenciaCategoria, licCat);
         if (oldV.placa !== placa) logAdminAction('EDITAR', oldV, 'PLACA', oldV.placa, placa);
 
-        vehicles[existingCedIdx] = {
+        const updatedObj = {
           ...vehicles[existingCedIdx],
           placa,
           tipoVehiculo: tipo,
@@ -1547,6 +1616,9 @@ document.addEventListener('DOMContentLoaded', () => {
           licenciaCategoria: licCat,
           licenciaVencimiento: licVenc
         };
+        vehicles[existingCedIdx] = updatedObj;
+        manualOverridesMap.set(`${cleanCed}_${tipo}`, updatedObj);
+        saveModificationsRegistry();
       } else {
         // Add new
         const newId = (Date.now()).toString();
@@ -1566,6 +1638,8 @@ document.addEventListener('DOMContentLoaded', () => {
           rtmVencimiento: rtm
         };
         vehicles.unshift(newObj);
+        manualOverridesMap.set(`${cedula}_${tipo}`, newObj);
+        saveModificationsRegistry();
         logAdminAction('CREAR', newObj, 'REGISTRO_NUEVO', 'NIN-GUNO', placa);
       }
     }
@@ -1822,6 +1896,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
           targetVehicles.forEach((tv) => {
             const cleanPlaca = placaBase.replace(/[^A-Z0-9]/g, '');
+
+            // STRICT RULE: IF RECORD WAS DELETED BY ADMIN, DISCARD IT PERMANENTLY!
+            if (deletedVehicleKeysSet.has(`${cleanCedula}_${tv.tipoVehiculo}`) || deletedVehicleKeysSet.has(`${cleanCedula}_${cleanPlaca}`)) {
+              duplicatesFiltered++;
+              return;
+            }
+
             const isValidPlate = isValidColombianPlate(placaBase);
 
             // STRICT RULE: IF PLATE IS INVALID, DISCARD RECORD ENTIRELY!
@@ -1847,7 +1928,22 @@ document.addEventListener('DOMContentLoaded', () => {
               return;
             }
 
-            const displayPlaca = cleanPlaca;
+            let displayPlaca = cleanPlaca;
+            let finalSoat = (rawSoat && rawSoat !== 'N/A') ? rawSoat : 'N/A';
+            let finalRtm = (rawRtm && rawRtm !== 'N/A') ? rawRtm : 'N/A';
+            let finalLicCat = tv.licCat;
+            let finalLicVenc = tv.licVenc;
+
+            // Apply manual Admin overrides if present
+            const ov = manualOverridesMap.get(`${cleanCedula}_${tv.tipoVehiculo}`);
+            if (ov) {
+              if (ov.placa) displayPlaca = ov.placa;
+              if (ov.soatVencimiento) finalSoat = ov.soatVencimiento;
+              if (ov.rtmVencimiento) finalRtm = ov.rtmVencimiento;
+              if (ov.licenciaCategoria) finalLicCat = ov.licenciaCategoria;
+              if (ov.licenciaVencimiento) finalLicVenc = ov.licenciaVencimiento;
+            }
+
             const dedupKey = `${cleanCedula}_${tv.tipoVehiculo}_${displayPlaca}`;
 
             dedupedRecordsMap.set(dedupKey, {
@@ -1859,10 +1955,10 @@ document.addEventListener('DOMContentLoaded', () => {
               empresa,
               centroDistribucion: cdClean,
               cargo,
-              soatVencimiento: (rawSoat && rawSoat !== 'N/A') ? rawSoat : 'N/A',
-              rtmVencimiento: (rawRtm && rawRtm !== 'N/A') ? rawRtm : 'N/A',
-              licenciaCategoria: tv.licCat,
-              licenciaVencimiento: tv.licVenc
+              soatVencimiento: finalSoat,
+              rtmVencimiento: finalRtm,
+              licenciaCategoria: finalLicCat,
+              licenciaVencimiento: finalLicVenc
             });
           });
         });
