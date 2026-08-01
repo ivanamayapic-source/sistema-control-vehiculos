@@ -534,7 +534,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (adminAuthError) adminAuthError.classList.add('hidden');
     if (adminUser) adminUser.value = '';
     if (adminPass) adminPass.value = '';
-    if (adminAuthModal) adminAuthModal.classList.remove('hidden');
+    if (adminAuthModal) {
+      adminAuthModal.classList.remove('hidden');
+      adminAuthModal.style.zIndex = '99999';
+    }
+    setTimeout(() => {
+      if (adminUser) adminUser.focus();
+    }, 50);
   }
 
   function closeAdminAuthModal() {
