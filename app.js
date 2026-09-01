@@ -1677,6 +1677,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('formNombre').value = v.nombre;
       document.getElementById('formCedula').value = v.cedula;
       document.getElementById('formEmpresa').value = v.empresa || '';
+      document.getElementById('formCentroDistribucion').value = v.centroDistribucion || 'CEDI BUCARAMANGA';
       document.getElementById('formSoat').value = v.soatVencimiento || '';
       document.getElementById('formRtm').value = v.rtmVencimiento || '';
       document.getElementById('formLicCat').value = v.licenciaCategoria || 'B1';
@@ -1687,6 +1688,7 @@ document.addEventListener('DOMContentLoaded', () => {
       vehicleForm.reset();
       document.getElementById('formVehicleId').value = '';
       document.getElementById('formPlaca').readOnly = false;
+      document.getElementById('formCentroDistribucion').value = 'CEDI BUCARAMANGA';
     }
   }
 
@@ -1702,6 +1704,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const nombre = document.getElementById('formNombre').value.trim();
     const cedula = document.getElementById('formCedula').value.trim();
     const empresa = document.getElementById('formEmpresa').value.trim();
+    const centroDistribucion = document.getElementById('formCentroDistribucion').value.trim();
     const soat = document.getElementById('formSoat').value;
     const rtm = document.getElementById('formRtm').value;
     const licCat = document.getElementById('formLicCat').value.trim().toUpperCase();
@@ -1727,6 +1730,7 @@ document.addEventListener('DOMContentLoaded', () => {
           nombre,
           cedula,
           empresa,
+          centroDistribucion,
           soatVencimiento: soat,
           rtmVencimiento: rtm,
           licenciaCategoria: licCat,
@@ -1756,6 +1760,7 @@ document.addEventListener('DOMContentLoaded', () => {
           tipoVehiculo: tipo,
           nombre,
           empresa,
+          centroDistribucion,
           soatVencimiento: soat,
           rtmVencimiento: rtm,
           licenciaCategoria: licCat,
@@ -1775,7 +1780,7 @@ document.addEventListener('DOMContentLoaded', () => {
           cedula,
           cargo: 'COLABORADOR',
           empresa,
-          centroDistribucion: 'CEDI',
+          centroDistribucion,
           propiedad: 'Propio',
           licenciaCategoria: licCat,
           licenciaVencimiento: licVenc,
