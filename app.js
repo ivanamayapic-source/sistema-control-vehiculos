@@ -123,6 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof populateBadgeDropdownFilters === 'function') populateBadgeDropdownFilters();
     if (typeof populateBadgeSelector === 'function') populateBadgeSelector();
     renderDatabaseTable();
+    if (window.checkUrlParamForScan) window.checkUrlParamForScan();
   }
 
   // --- INIT DATA: Local-first, then cloud in background ---
@@ -903,13 +904,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Check URL params on load for direct QR scanning (e.g., ?placa=JRK763 or ?placa=SLB01E)
-  const urlParams = new URLSearchParams(window.location.search);
-  const placaParam = urlParams.get('placa');
-  if (placaParam) {
-    setRole('VIGILANCIA');
-    verifyVehicleByPlaca(placaParam.toUpperCase());
-  }
+  // Helper to process QR scans from URL
+  window.checkUrlParamForScan = function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const placaParam = urlParams.get('placa');
+    if (placaParam) {
+      setRole('VIGILANCIA');
+      verifyVehicleByPlaca(placaParam.toUpperCase());
+    }
+  };
 
   // --------------------------------------------------------------------------
   // 6. MODULO 2: ESTUDIO DE CARNETIZACION (BADGES & FILTERS)
@@ -2320,4 +2323,5 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof populateBadgeDropdownFilters === 'function') populateBadgeDropdownFilters();
   if (typeof populateBadgeSelector === 'function') populateBadgeSelector();
   renderDatabaseTable();
+  if (window.checkUrlParamForScan) window.checkUrlParamForScan();
 });
