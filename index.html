@@ -110,6 +110,11 @@
             <span>Base de Datos y Renovaciones</span>
             <i class="fa-solid fa-lock text-[10px] text-amber-400 ml-1 admin-lock-icon"></i>
           </button>
+          <button id="tab-alertas" class="nav-tab text-sm font-semibold py-3 px-4 rounded-lg flex items-center gap-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all whitespace-nowrap admin-only-tab">
+            <i class="fa-solid fa-envelope font-lg"></i>
+            <span>Alertas y Correos</span>
+            <i class="fa-solid fa-lock text-[10px] text-amber-400 ml-1 admin-lock-icon"></i>
+          </button>
         </nav>
       </div>
     </div>
@@ -610,6 +615,57 @@
         </div>
       </div>
     </section>
+
+    <!-- ================================================================= -->
+    <!-- MODULO 4: ALERTAS Y CORREOS                                       -->
+    <!-- ================================================================= -->
+    <section id="view-alertas" class="hidden space-y-6">
+      
+      <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-2">
+            <i class="fa-solid fa-envelope"></i> Notificaciones Automáticas
+          </span>
+          <h2 class="font-outfit text-2xl font-bold text-white">Alertas de Vencimientos</h2>
+          <p class="text-slate-400 text-sm mt-1">Historial de correos enviados al personal de SST.</p>
+        </div>
+        <div class="flex gap-3">
+          <button id="testAlertsBtn" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 px-5 rounded-xl border border-slate-700 transition-all text-sm flex items-center gap-2">
+            <i class="fa-solid fa-flask text-sky-400"></i> Probar (Modo Test)
+          </button>
+          <button id="runAlertsBtn" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 px-5 rounded-xl shadow-[0_0_15px_rgba(245,158,11,0.2)] transition-all text-sm flex items-center gap-2">
+            <i class="fa-solid fa-paper-plane"></i> Ejecutar Ahora
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-slate-900 rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
+        <div class="p-5 border-b border-slate-800/60 bg-slate-900/50 flex justify-between items-center">
+          <h3 class="font-outfit font-bold text-lg text-white">Historial de Envíos</h3>
+          <button id="refreshAlertsBtn" class="text-slate-400 hover:text-white transition-colors">
+            <i class="fa-solid fa-rotate-right"></i> Refrescar
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse min-w-[800px]">
+            <thead>
+              <tr class="bg-slate-950/50 text-slate-400 text-xs uppercase tracking-wider font-semibold border-b border-slate-800">
+                <th class="p-4 rounded-tl-xl">Fecha/Hora</th>
+                <th class="p-4">Destinatario</th>
+                <th class="p-4">Placa / Vehículo</th>
+                <th class="p-4">Documento</th>
+                <th class="p-4">Tipo de Alerta</th>
+                <th class="p-4">Estado</th>
+              </tr>
+            </thead>
+            <tbody id="alertsTableBody" class="divide-y divide-slate-800/60 font-mono text-sm">
+              <tr><td colspan="6" class="p-6 text-center text-slate-500">Cargando historial...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- ================================================================= -->

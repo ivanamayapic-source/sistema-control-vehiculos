@@ -465,13 +465,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabs = {
     vigilancia: document.getElementById('tab-vigilancia'),
     carnets: document.getElementById('tab-carnets'),
-    database: document.getElementById('tab-database')
+    database: document.getElementById('tab-database'),
+    alertas: document.getElementById('tab-alertas')
   };
 
   const views = {
     vigilancia: document.getElementById('view-vigilancia'),
     carnets: document.getElementById('view-carnets'),
-    database: document.getElementById('view-database')
+    database: document.getElementById('view-database'),
+    alertas: document.getElementById('view-alertas')
   };
 
   const viewLandingGateway = document.getElementById('view-landing-gateway');
@@ -593,6 +595,12 @@ document.addEventListener('DOMContentLoaded', () => {
   tabs.vigilancia.addEventListener('click', () => switchTab('vigilancia'));
   tabs.carnets.addEventListener('click', () => requestAdminAccess('carnets'));
   tabs.database.addEventListener('click', () => requestAdminAccess('database'));
+  tabs.alertas.addEventListener('click', () => {
+    requestAdminAccess('alertas');
+    if (currentUserRole === 'ADMIN') {
+      fetchAlertsHistory();
+    }
+  });
 
   // --------------------------------------------------------------------------
   // 4. KPI STATS UPDATER
@@ -2315,6 +2323,97 @@ document.addEventListener('DOMContentLoaded', () => {
       switchTab('database');
     }
   }
+
+  // --------------------------------------------------------------------------
+  // MODULO 4: ALERTAS Y CORREOS (SST)
+  // --------------------------------------------------------------------------
+  async function fetchAlertsHistory() {
+    if (!supabaseClient) return;
+    const tbody = document.getElementById('alertsTableBody');
+    tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-500">Cargando historial...</td></tr>';
+    
+    try {
+      // Fetch alerts joined with vehicle plate (since Supabase JS doesn't do auto-joins easily without explicit mapping, we'll fetch alerts and map locally for simplicity)
+      const { data: alerts, error } = await supabaseClient.from('document_alerts').select('*').order('sent_at', { ascending: false }).limit(100);
+      
+      if (error) throw error;
+
+      if (!alerts || alerts.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-500">No hay alertas enviadas registradas.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      alerts.forEach(alert => {
+        // Find vehicle local
+        const v = vehicles.find(x => x.id === alert.vehicle_id);
+        const vehName = v ? `${v.placa} (${v.tipoVehiculo})` : `Vehículo Borrado (${alert.vehicle_id.split('-')[0]})`;
+        
+        let statusColor = alert.status === 'sent' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+        let statusText = alert.status === 'sent' ? 'Enviado' : 'Error';
+
+        let badgeClass = 'bg-slate-800 text-slate-300';
+        if (alert.alert_type === '30_days') badgeClass = 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+        else if (alert.alert_type === '15_days') badgeClass = 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+        else if (alert.alert_type === '7_days') badgeClass = 'bg-rose-500/20 text-rose-400 border-rose-500/30';
+        else if (alert.alert_type === '1_day') badgeClass = 'bg-red-600/20 text-red-400 border-red-600/30';
+        else if (alert.alert_type === 'expired') badgeClass = 'bg-slate-950 text-rose-500 border-rose-500/50';
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-800/30 transition-colors";
+        tr.innerHTML = `
+          <td class="p-4 whitespace-nowrap text-slate-400">${new Date(alert.sent_at).toLocaleString()}</td>
+          <td class="p-4 text-sky-400">${alert.recipient_email || 'N/A'}</td>
+          <td class="p-4 font-bold text-white">${vehName}</td>
+          <td class="p-4">${alert.document_type}</td>
+          <td class="p-4">
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${badgeClass}">
+              ${alert.alert_type.replace('_', ' ')}
+            </span>
+          </td>
+          <td class="p-4">
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${statusColor}" title="${alert.error_message || ''}">
+              ${statusText}
+            </span>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (e) {
+      console.error(e);
+      tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-rose-500">Error cargando historial: ${e.message}</td></tr>`;
+    }
+  }
+
+  const btnRefreshAlerts = document.getElementById('refreshAlertsBtn');
+  if (btnRefreshAlerts) btnRefreshAlerts.addEventListener('click', fetchAlertsHistory);
+
+  async function triggerAlerts(testMode) {
+    if (!confirm(testMode ? '¿Ejecutar la verificación de correos en modo de PRUEBA? (Se mostrarán resultados en consola y en el backend, no se enviarán correos reales)' : '🚨 ¿Estás seguro de enviar los correos REALES ahora?')) return;
+    
+    const btn = testMode ? document.getElementById('testAlertsBtn') : document.getElementById('runAlertsBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Ejecutando...';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch(`/api/cron-check-expirations?test=${testMode}`);
+      const result = await res.json();
+      console.log('Resultados del backend:', result);
+      alert(`Ejecución ${testMode ? '(Prueba)' : '(Real)'} completada.\nRevisados: ${result.documentsChecked}\nEnviados/A Enviar: ${result.emailsSent}\nYa enviados antes: ${result.alreadySent}\nErrores: ${result.errors}`);
+      if (!testMode) fetchAlertsHistory();
+    } catch (e) {
+      alert('Error ejecutando alertas: ' + e.message);
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  const btnTestAlerts = document.getElementById('testAlertsBtn');
+  const btnRunAlerts = document.getElementById('runAlertsBtn');
+  if (btnTestAlerts) btnTestAlerts.addEventListener('click', () => triggerAlerts(true));
+  if (btnRunAlerts) btnRunAlerts.addEventListener('click', () => triggerAlerts(false));
 
   // Initial render - Load vehicles data first!
   initData();
