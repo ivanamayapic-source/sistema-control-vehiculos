@@ -2400,7 +2400,24 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(`/api/cron-check-expirations?test=${testMode}`);
       const result = await res.json();
       console.log('Resultados del backend:', result);
-      alert(`Ejecución ${testMode ? '(Prueba)' : '(Real)'} completada.\nRevisados: ${result.documentsChecked}\nEnviados/A Enviar: ${result.emailsSent}\nYa enviados antes: ${result.alreadySent}\nErrores: ${result.errors}`);
+      
+      let msg = `Ejecución ${testMode ? '(Prueba Simulación)' : '(Real)'} completada.\n`;
+      msg += `Revisados: ${result.documentsChecked} documentos.\n`;
+      msg += `Nuevas Alertas a Enviar: ${result.alertsTriggered}\n`;
+      msg += `Alertas ya enviadas previamente (omitidas): ${result.alreadySent}\n`;
+      msg += `Errores de envío: ${result.errors}\n\n`;
+
+      if (testMode && result.simulatedAlerts && result.simulatedAlerts.length > 0) {
+        msg += `--- DETALLE DE SIMULACIÓN ---\n`;
+        result.simulatedAlerts.forEach(a => {
+           msg += `📌 Vehículo: ${a.placa}\n   Doc: ${a.document_type} (Vence: ${a.expiration_date})\n   Estado: Faltan ${a.days_left} días -> Alerta: ${a.alert_type}\n   Destinatario: ${a.recipient}\n   Asunto: ${a.subject}\n\n`;
+        });
+      } else if (testMode) {
+        msg += `✅ No hay nuevas alertas pendientes por enviar.`;
+      }
+
+      alert(msg);
+      
       if (!testMode) fetchAlertsHistory();
     } catch (e) {
       alert('Error ejecutando alertas: ' + e.message);

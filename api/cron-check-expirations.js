@@ -181,7 +181,26 @@ module.exports = async (req, res) => {
       emailsSent: emailsSentCount,
       errors: errorsCount,
       alreadySent: logs.filter(l => l.startsWith('Already sent')).length,
-      logs: logs
+      logs: logs,
+      simulatedAlerts: isTestMode ? alertsToSend.map(a => {
+        let subject = '';
+        switch(a.alert_type) {
+          case '30_days': subject = `⚠️ Documento próximo a vencer - 30 días (${a.document_type})`; break;
+          case '15_days': subject = `⚠️ Documento próximo a vencer - 15 días (${a.document_type})`; break;
+          case '7_days': subject = `🔴 ALERTA DOCUMENTAL - VENCE EN 7 DÍAS (${a.document_type})`; break;
+          case '1_day': subject = `🚨 ALERTA URGENTE - DOCUMENTO VENCE MAÑANA (${a.document_type})`; break;
+          case 'expired': subject = `⛔ DOCUMENTO VENCIDO - REQUIERE RENOVACIÓN (${a.document_type})`; break;
+        }
+        return {
+          placa: a.vehicle.placa,
+          document_type: a.document_type,
+          expiration_date: a.expiration_date,
+          days_left: a.days_left,
+          alert_type: a.alert_type,
+          recipient: alertEmail,
+          subject: subject
+        };
+      }) : []
     };
 
     console.log('[DOCUMENT ALERTS] Summary:', resultSummary);
