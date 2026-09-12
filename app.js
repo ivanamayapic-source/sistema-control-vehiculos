@@ -1753,23 +1753,22 @@ document.addEventListener('DOMContentLoaded', () => {
         saveToSupabase(updatedObj);
       }
     } else {
-      // Check if a vehicle with the exact same cedula already exists (strict deduplication)
-      const cleanCed = cedula.replace(/[^0-9]/g, '').replace(/^0+/, '');
-      const existingCedIdx = vehicles.findIndex(x => x.cedula.replace(/[^0-9]/g, '').replace(/^0+/, '') === cleanCed);
+      // Check if a vehicle with the exact same PLACA already exists (strict deduplication by plate)
+      const cleanPlaca = placa.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+      const existingPlacaIdx = vehicles.findIndex(x => x.placa.replace(/[^A-Z0-9]/gi, '').toUpperCase() === cleanPlaca);
       
-      if (existingCedIdx !== -1) {
-        const oldV = vehicles[existingCedIdx];
+      if (existingPlacaIdx !== -1) {
+        const oldV = vehicles[existingPlacaIdx];
         if (oldV.soatVencimiento !== soat) logAdminAction('RENOVAR_SOAT', oldV, 'FECHA_SOAT', oldV.soatVencimiento, soat);
         if (oldV.rtmVencimiento !== rtm) logAdminAction('RENOVAR_RTM', oldV, 'FECHA_RTM', oldV.rtmVencimiento, rtm);
         if (oldV.licenciaVencimiento !== licVenc) logAdminAction('RENOVAR_LICENCIA', oldV, 'FECHA_LICENCIA', oldV.licenciaVencimiento, licVenc);
         if (oldV.licenciaCategoria !== licCat) logAdminAction('EDITAR', oldV, 'CATEGORIA_LICENCIA', oldV.licenciaCategoria, licCat);
-        if (oldV.placa !== placa) logAdminAction('EDITAR', oldV, 'PLACA', oldV.placa, placa);
 
         const updatedObj = {
-          ...vehicles[existingCedIdx],
-          placa,
+          ...vehicles[existingPlacaIdx],
           tipoVehiculo: tipo,
           nombre,
+          cedula,
           empresa,
           centroDistribucion,
           soatVencimiento: soat,
@@ -1777,9 +1776,10 @@ document.addEventListener('DOMContentLoaded', () => {
           licenciaCategoria: licCat,
           licenciaVencimiento: licVenc
         };
-        vehicles[existingCedIdx] = updatedObj;
-        manualOverridesMap.set(`${cleanCed}_${tipo}`, updatedObj);
+        vehicles[existingPlacaIdx] = updatedObj;
+        manualOverridesMap.set(`${cedula}_${tipo}`, updatedObj); // Maintain this for QR override tracking
         saveModificationsRegistry();
+        saveToSupabase(updatedObj);
       } else {
         // Add new
         const newId = (Date.now()).toString();
@@ -1793,16 +1793,17 @@ document.addEventListener('DOMContentLoaded', () => {
           empresa,
           centroDistribucion,
           propiedad: 'Propio',
+          soatVencimiento: soat,
+          rtmVencimiento: rtm,
           licenciaCategoria: licCat,
           licenciaVencimiento: licVenc,
-          soatVencimiento: soat,
-          rtmVencimiento: rtm
+          source: 'manual'
         };
-        vehicles.unshift(newObj);
+        vehicles.push(newObj);
         manualOverridesMap.set(`${cedula}_${tipo}`, newObj);
         saveModificationsRegistry();
+        logAdminAction('REGISTRAR', newObj, 'NUEVO_VEHICULO', '', placa);
         saveToSupabase(newObj);
-        logAdminAction('CREAR', newObj, 'REGISTRO_NUEVO', 'NIN-GUNO', placa);
       }
     }
 
