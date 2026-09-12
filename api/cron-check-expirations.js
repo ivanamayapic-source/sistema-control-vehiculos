@@ -1,5 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
 // Vercel Serverless Function
 module.exports = async (req, res) => {
@@ -7,9 +7,9 @@ module.exports = async (req, res) => {
     // 1. Validate environment
     const supabaseUrl = (process.env.SUPABASE_URL || '').trim();
     const supabaseKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
-    const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
+    const gmailUser = (process.env.GMAIL_USER || '').trim();
+    const gmailPass = (process.env.GMAIL_PASS || '').trim();
     const alertEmail = (process.env.ALERT_EMAIL || 'auxiliarsst.nuevosantander@lis.com.co').trim();
-    const emailFrom = (process.env.EMAIL_FROM || 'Alertas CEDI <onboarding@resend.dev>').trim();
     const isTestMode = req.query.test === 'true';
 
     if (!supabaseUrl || !supabaseKey) {
@@ -17,7 +17,17 @@ module.exports = async (req, res) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const resend = resendApiKey ? new Resend(resendApiKey) : null;
+    let transporter = null;
+    
+    if (gmailUser && gmailPass) {
+      transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: gmailUser,
+          pass: gmailPass
+        }
+      });
+    }
 
     // 2. Fetch all vehicles and alerts
     const { data: vehicles, error: vError } = await supabase.from('vehicles').select('*');
@@ -149,20 +159,19 @@ module.exports = async (req, res) => {
       let sendError = null;
 
       if (!isTestMode) {
-        if (resend) {
+        if (transporter) {
           try {
-            const { error } = await resend.emails.send({
-              from: emailFrom,
+            await transporter.sendMail({
+              from: `"Alertas SST" <${gmailUser}>`,
               to: alertEmail,
               subject: `[${v.placa}] ${subject}`,
               html: htmlBody
             });
-            if (error) sendError = error.message;
           } catch (e) {
             sendError = e.message;
           }
         } else {
-          sendError = 'RESEND_API_KEY not configured';
+          sendError = 'GMAIL_USER or GMAIL_PASS not configured';
         }
 
         // Upsert log in Supabase (so we can retry failed ones)
