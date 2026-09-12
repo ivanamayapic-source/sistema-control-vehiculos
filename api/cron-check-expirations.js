@@ -55,7 +55,7 @@ module.exports = async (req, res) => {
     };
 
     const determineAlertType = (days) => {
-      if (days < 0) return 'expired';
+      if (days <= 0) return 'expired';
       if (days === 1) return '1_day';
       if (days > 1 && days <= 7) return '7_days';
       if (days > 7 && days <= 15) return '15_days';
