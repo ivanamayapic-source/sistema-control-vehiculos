@@ -93,23 +93,24 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Apply deletion filters and manual overrides to a raw list ---
   function applyFiltersAndOverrides(rawList) {
     let filtered = rawList.filter(v => {
-      const cleanCedula = (v.cedula || '').toString().replace(/\D/g, '');
-      const cleanPlaca = (v.placa || '').toString().toUpperCase().replace(/[^A-Z0-9]/g, '');
-      const keyCedulaTipo = `${cleanCedula}_${v.tipoVehiculo}`;
-      const keyCedulaPlaca = `${cleanCedula}_${cleanPlaca}`;
-      return !deletedVehicleKeysSet.has(keyCedulaTipo) && !deletedVehicleKeysSet.has(keyCedulaPlaca);
+      const keyId = v.id ? v.id.toString() : '';
+      return !deletedVehicleKeysSet.has(keyId);
     });
 
     filtered.forEach(v => {
-      const cleanCedula = (v.cedula || '').toString().replace(/\D/g, '');
-      const key = `${cleanCedula}_${v.tipoVehiculo}`;
-      const ov = manualOverridesMap.get(key);
+      const keyId = v.id ? v.id.toString() : '';
+      const ov = manualOverridesMap.get(keyId);
       if (ov) {
         if (ov.placa) v.placa = ov.placa;
         if (ov.soatVencimiento) v.soatVencimiento = ov.soatVencimiento;
         if (ov.rtmVencimiento) v.rtmVencimiento = ov.rtmVencimiento;
         if (ov.licenciaCategoria) v.licenciaCategoria = ov.licenciaCategoria;
         if (ov.licenciaVencimiento) v.licenciaVencimiento = ov.licenciaVencimiento;
+        if (ov.tipoVehiculo) v.tipoVehiculo = ov.tipoVehiculo;
+        if (ov.nombre) v.nombre = ov.nombre;
+        if (ov.cedula) v.cedula = ov.cedula;
+        if (ov.empresa) v.empresa = ov.empresa;
+        if (ov.centroDistribucion) v.centroDistribucion = ov.centroDistribucion;
       }
     });
 
@@ -1614,8 +1615,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       createBackupSnapshot();
       if (targetVehicle) {
-        deletedVehicleKeysSet.add(`${targetVehicle.cedula}_${targetVehicle.tipoVehiculo}`);
-        deletedVehicleKeysSet.add(`${targetVehicle.cedula}_${targetVehicle.placa}`);
+        deletedVehicleKeysSet.add(targetId);
         saveModificationsRegistry();
         logAdminAction('ELIMINAR', targetVehicle, 'REGISTRO_COMPLETO', targetVehicle.placa, 'ELIMINADO_DE_APLICACION');
       }
@@ -1748,7 +1748,7 @@ document.addEventListener('DOMContentLoaded', () => {
           licenciaVencimiento: licVenc
         };
         vehicles[idx] = updatedObj;
-        manualOverridesMap.set(`${cedula}_${tipo}`, updatedObj);
+        manualOverridesMap.set(updatedObj.id ? updatedObj.id.toString() : '', updatedObj);
         saveModificationsRegistry();
         saveToSupabase(updatedObj);
       }
@@ -1777,7 +1777,7 @@ document.addEventListener('DOMContentLoaded', () => {
           licenciaVencimiento: licVenc
         };
         vehicles[existingPlacaIdx] = updatedObj;
-        manualOverridesMap.set(`${cedula}_${tipo}`, updatedObj); // Maintain this for QR override tracking
+        manualOverridesMap.set(updatedObj.id ? updatedObj.id.toString() : '', updatedObj); // Maintain this for QR override tracking
         saveModificationsRegistry();
         saveToSupabase(updatedObj);
       } else {
@@ -1800,7 +1800,7 @@ document.addEventListener('DOMContentLoaded', () => {
           source: 'manual'
         };
         vehicles.push(newObj);
-        manualOverridesMap.set(`${cedula}_${tipo}`, newObj);
+        manualOverridesMap.set(newObj.id.toString(), newObj);
         saveModificationsRegistry();
         logAdminAction('REGISTRAR', newObj, 'NUEVO_VEHICULO', '', placa);
         saveToSupabase(newObj);
