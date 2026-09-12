@@ -27,7 +27,9 @@ module.exports = async (req, res) => {
     if (aError) throw aError;
 
     const pastAlertsSet = new Set(
-      pastAlerts.map(a => `${a.vehicle_id}_${a.document_type}_${a.alert_type}`)
+      pastAlerts
+        .filter(a => a.status === 'sent')
+        .map(a => `${a.vehicle_id}_${a.document_type}_${a.alert_type}`)
     );
 
     // 3. Compute current date in Bogota
@@ -162,15 +164,15 @@ module.exports = async (req, res) => {
           sendError = 'RESEND_API_KEY not configured';
         }
 
-        // Insert log in Supabase
-        await supabase.from('document_alerts').insert({
+        // Upsert log in Supabase (so we can retry failed ones)
+        await supabase.from('document_alerts').upsert({
           vehicle_id: v.id,
           document_type: dType,
           alert_type: alert.alert_type,
           recipient_email: alertEmail,
           status: sendError ? 'error' : 'sent',
           error_message: sendError
-        });
+        }, { onConflict: 'vehicle_id, document_type, alert_type' });
       }
 
       if (sendError) {
