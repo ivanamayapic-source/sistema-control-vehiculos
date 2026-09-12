@@ -5,11 +5,11 @@ const { Resend } = require('resend');
 module.exports = async (req, res) => {
   try {
     // 1. Validate environment
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const resendApiKey = process.env.RESEND_API_KEY;
-    const alertEmail = process.env.ALERT_EMAIL || 'auxiliarsst.nuevosantander@lis.com.co';
-    const emailFrom = process.env.EMAIL_FROM || 'Alertas CEDI <onboarding@resend.dev>';
+    const supabaseUrl = (process.env.SUPABASE_URL || '').trim();
+    const supabaseKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+    const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
+    const alertEmail = (process.env.ALERT_EMAIL || 'auxiliarsst.nuevosantander@lis.com.co').trim();
+    const emailFrom = (process.env.EMAIL_FROM || 'Alertas CEDI <onboarding@resend.dev>').trim();
     const isTestMode = req.query.test === 'true';
 
     if (!supabaseUrl || !supabaseKey) {

@@ -2401,6 +2401,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await res.json();
       console.log('Resultados del backend:', result);
       
+      if (!res.ok || result.error) {
+        throw new Error(result.error || `Error del servidor: ${res.status}`);
+      }
+      
       let msg = `Ejecución ${testMode ? '(Prueba Simulación)' : '(Real)'} completada.\n`;
       msg += `Revisados: ${result.documentsChecked} documentos.\n`;
       msg += `Nuevas Alertas a Enviar: ${result.alertsTriggered}\n`;
