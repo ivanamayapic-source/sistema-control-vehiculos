@@ -65,6 +65,14 @@ module.exports = async (req, res) => {
 
     // 4. Analyze each document
     for (const v of vehicles) {
+      const cd = (v.centro_distribucion || v.centroDistribucion || '').trim().toUpperCase();
+      const emp = (v.empresa || '').trim().toUpperCase();
+      
+      // Filtro estricto: Solo CD FORJANDES y Empresa LIS
+      if (cd !== 'CD FORJANDES' || emp !== 'LIS') {
+        continue;
+      }
+
       const docs = [
         { type: 'SOAT', date: v.soat_vencimiento },
         { type: 'RTM', date: v.rtm_vencimiento },
@@ -127,6 +135,7 @@ module.exports = async (req, res) => {
           <li><strong>Persona/Propietario:</strong> ${v.nombre}</li>
           <li><strong>Vehículo (Placa):</strong> ${v.placa} (${v.tipo_vehiculo})</li>
           <li><strong>Empresa:</strong> ${v.empresa || 'CEDI'}</li>
+          <li><strong>Centro de Distribución:</strong> ${v.centro_distribucion || v.centroDistribucion || 'N/A'}</li>
           <li><strong>Documento:</strong> ${dType}</li>
           <li><strong>Fecha de vencimiento:</strong> ${alert.expiration_date}</li>
           <li><strong>Estado:</strong> ${daysText}</li>
