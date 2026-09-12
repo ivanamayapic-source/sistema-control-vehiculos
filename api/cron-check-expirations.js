@@ -112,7 +112,8 @@ module.exports = async (req, res) => {
     let emailsSentCount = 0;
     let errorsCount = 0;
 
-    for (const alert of alertsToSend) {
+    // Process alerts concurrently to avoid Vercel's 10s timeout on Hobby plan
+    await Promise.all(alertsToSend.map(async (alert) => {
       const v = alert.vehicle;
       const dType = alert.document_type;
       
@@ -182,7 +183,7 @@ module.exports = async (req, res) => {
         emailsSentCount++;
         logs.push(`Sent ${alert.alert_type} alert for ${v.placa} (${dType}) to ${alertEmail}`);
       }
-    }
+    }));
 
     const resultSummary = {
       message: 'Ejecución completada',
