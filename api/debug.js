@@ -1,11 +1,9 @@
 module.exports = async (req, res) => {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   res.status(200).json({
-    url: url,
-    urlLength: url ? url.length : 0,
-    hasKey: !!key,
-    keyPrefix: key ? key.substring(0, 10) : 'none',
-    nodeVersion: process.version
+    url: process.env.SUPABASE_URL,
+    key: process.env.SUPABASE_SERVICE_ROLE_KEY ? process.env.SUPABASE_SERVICE_ROLE_KEY.substring(0, 10) : 'none',
+    resend: process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.substring(0, 10) : 'none',
+    email: process.env.ALERT_EMAIL,
+    from: process.env.EMAIL_FROM
   });
 };

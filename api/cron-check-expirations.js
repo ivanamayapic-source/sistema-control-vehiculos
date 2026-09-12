@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
     const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
     // 2. Fetch all vehicles and alerts
-    const { data: vehicles, error: vError } = await supabase.from('vehiculos').select('*');
+    const { data: vehicles, error: vError } = await supabase.from('vehicles').select('*');
     if (vError) throw vError;
 
     const { data: pastAlerts, error: aError } = await supabase.from('document_alerts').select('*');
