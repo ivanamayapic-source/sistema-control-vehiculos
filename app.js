@@ -54,8 +54,56 @@ document.addEventListener('DOMContentLoaded', () => {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   }
 
+  // --- Helper: Resolve full name of Centro de Distribucion ---
+  function resolveCentroDistribucion(v) {
+    if (!v) return 'Sin asignar';
+    const cd = (v.centroDistribucion || v.centro_distribucion || '').toString().trim();
+    if (!cd || cd === '0' || cd.toUpperCase() === 'N/A' || cd.toUpperCase() === 'NO APLICA' || cd.toLowerCase() === 'sin asignar') {
+      return 'Sin asignar';
+    }
+
+    const norm = cd.toUpperCase().replace(/\s+/g, ' ');
+    const cdLookup = {
+      'FORJANDES': 'CD FORJANDES',
+      'CD FORJANDES': 'CD FORJANDES',
+      'CD_FORJANDES': 'CD FORJANDES',
+      'FJ': 'CD FORJANDES',
+
+      'BUCARAMANGA': 'CD BUCARAMANGA',
+      'CD BUCARAMANGA': 'CD BUCARAMANGA',
+      'CD_BUCARAMANGA': 'CD BUCARAMANGA',
+      'CEDI BUCARAMANGA': 'CD BUCARAMANGA',
+      'BGA': 'CD BUCARAMANGA',
+
+      'SAN GIL': 'CD SAN GIL',
+      'CD SAN GIL': 'CD SAN GIL',
+      'CD_SAN_GIL': 'CD SAN GIL',
+      'SANGIL': 'CD SAN GIL',
+      'SG': 'CD SAN GIL',
+
+      'BARRANCA': 'CD BARRANCA',
+      'CD BARRANCA': 'CD BARRANCA',
+      'CD_BARRANCA': 'CD BARRANCA',
+      'BARRANCABERMEJA': 'CD BARRANCA',
+      'CD BARRANCABERMEJA': 'CD BARRANCA',
+      'BA': 'CD BARRANCA',
+
+      'CUCUTA': 'CD CUCUTA',
+      'CD CUCUTA': 'CD CUCUTA',
+      'CD_CUCUTA': 'CD CUCUTA',
+      'CUC': 'CD CUCUTA'
+    };
+
+    if (cdLookup[norm]) {
+      return cdLookup[norm];
+    }
+
+    return cd;
+  }
+
   // --- Helper: Convert a Supabase row to our local vehicle object format ---
   function supabaseRowToVehicle(row) {
+    const rawCd = (row.centro_distribucion || row.centroDistribucion || '').toString().trim();
     return {
       id: row.id || `${row.cedula}_${row.placa}`,
       placa: row.placa || '',
@@ -63,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
       cedula: row.cedula || '',
       tipoVehiculo: row.tipo_vehiculo || row.tipoVehiculo || 'CARRO',
       empresa: row.empresa || 'CEDI',
-      centroDistribucion: row.centro_distribucion || row.centroDistribucion || 'CD BUCARAMANGA',
+      centroDistribucion: rawCd,
       cargo: row.cargo || 'COLABORADOR',
       soatVencimiento: row.soat_vencimiento || row.soatVencimiento || 'N/A',
       rtmVencimiento: row.rtm_vencimiento || row.rtmVencimiento || 'N/A',
@@ -81,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
       cedula: v.cedula,
       tipo_vehiculo: v.tipoVehiculo,
       empresa: v.empresa || 'CEDI',
-      centro_distribucion: v.centroDistribucion || 'CD BUCARAMANGA',
+      centro_distribucion: (v.centroDistribucion || '').trim() || null,
       cargo: v.cargo || 'COLABORADOR',
       soat_vencimiento: (v.soatVencimiento && v.soatVencimiento !== 'N/A') ? v.soatVencimiento : null,
       rtm_vencimiento: (v.rtmVencimiento && v.rtmVencimiento !== 'N/A') ? v.rtmVencimiento : null,
@@ -334,7 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
           'CEDULA (SIN PUNTOS)': v.cedula,
           'TIPO DE VEHICULO': v.tipoVehiculo,
           'EMPRESA': v.empresa,
-          'CENTRO DE DISTRIBUCION': v.centroDistribucion || 'CEDI BUCARAMANGA',
+          'Centro de Distribución': resolveCentroDistribucion(v),
           'POSICIONES': v.cargo,
           'FECHA VENCIMIENTO SOAT': v.soatVencimiento,
           'FECHA VENCIMIENTO RTM': v.rtmVencimiento,
@@ -938,7 +986,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function populateBadgeDropdownFilters() {
     if (!badgeCdFilter || !badgeEmpresaFilter) return;
 
-    const cds = [...new Set(vehicles.map(v => (v.centroDistribucion || 'CEDI').trim()))].sort();
+    const cds = [...new Set(vehicles.map(v => resolveCentroDistribucion(v)))].sort();
     const empresas = [...new Set(vehicles.map(v => (v.empresa || 'CEDI').trim()))].sort();
 
     badgeCdFilter.innerHTML = '<option value="ALL">🏢 Todos los CD</option>';
@@ -969,7 +1017,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return vehicles.filter(v => {
       // 1. CD Filter
-      if (cdVal !== 'ALL' && (v.centroDistribucion || 'CEDI').trim() !== cdVal) {
+      if (cdVal !== 'ALL' && resolveCentroDistribucion(v) !== cdVal) {
         return false;
       }
       // 2. Empresa Filter
@@ -1357,7 +1405,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!dbCdFilter || !dbEmpresaFilter || !dbLicenciaFilter) return;
 
     // CD options
-    const cds = Array.from(new Set(vehicles.map(v => v.centroDistribucion || 'CEDI'))).filter(Boolean).sort();
+    const cds = Array.from(new Set(vehicles.map(v => resolveCentroDistribucion(v)))).filter(Boolean).sort();
     dbCdFilter.innerHTML = '<option value="ALL">🏢 Todos los CD (Col. X)</option>';
     cds.forEach(cd => {
       const opt = document.createElement('option');
@@ -1393,7 +1441,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (currentTipoFilter !== 'ALL' && v.tipoVehiculo !== currentTipoFilter) return false;
 
       // Filter by CD (Col X)
-      if (currentCdFilter !== 'ALL' && (v.centroDistribucion || 'CEDI') !== currentCdFilter) return false;
+      if (currentCdFilter !== 'ALL' && resolveCentroDistribucion(v) !== currentCdFilter) return false;
 
       // Filter by Empresa (Col U)
       if (currentEmpresaFilter !== 'ALL' && (v.empresa || 'CEDI') !== currentEmpresaFilter) return false;
@@ -1522,7 +1570,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td class="py-3 px-4 font-mono font-extrabold text-amber-400 text-sm">${v.placa}</td>
         <td class="py-3 px-4 font-bold text-white">${v.nombre}</td>
         <td class="py-3 px-4 font-mono text-slate-300">${v.cedula}</td>
-        <td class="py-3 px-4 font-semibold text-amber-300/90">${v.centroDistribucion || 'CEDI'}</td>
+        <td class="py-3 px-4 font-semibold text-amber-300/90">${resolveCentroDistribucion(v)}</td>
         <td class="py-3 px-4 font-semibold text-sky-300/90">${v.empresa || 'CEDI'}</td>
         <td class="py-3 px-4 font-semibold text-slate-300 flex items-center gap-1.5">${icon} ${v.tipoVehiculo}</td>
         <td class="py-3 px-4 font-mono">
@@ -1822,6 +1870,7 @@ document.addEventListener('DOMContentLoaded', () => {
       'CEDULA (SIN PUNTOS)': v.cedula,
       'TIPO DE VEHICULO': v.tipoVehiculo,
       'EMPRESA': v.empresa,
+      'Centro de Distribución': resolveCentroDistribucion(v),
       'POSICIONES': v.cargo,
       'FECHA VENCIMIENTO SOAT': v.soatVencimiento,
       'FECHA VENCIMIENTO RTM': v.rtmVencimiento,
@@ -2030,8 +2079,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
           const rawSoat = getConsolidatedField(list, ['FECHA VENCIMIENTO SOAT', 'SOAT', 'BE'], true, 'N/A');
           const rawRtm = getConsolidatedField(list, ['FECHA VENCIMIENTO RTM', 'RTM', 'BH'], true, 'N/A');
-          const rawCd = getConsolidatedField(list, ['CENTRO DE DISTRIBUCION', 'CD', 'X'], false, 'CD BUCARAMANGA').toUpperCase();
-          const cdClean = (rawCd && rawCd !== '0' && rawCd !== 'N/A' && rawCd !== 'NO APLICA' && rawCd !== 'CD') ? rawCd : 'CD BUCARAMANGA';
+          const rawCd = getConsolidatedField(list, ['Centro de Distribución', 'CENTRO DE DISTRIBUCION', 'CD', 'X'], false, '').toUpperCase();
+          const cdClean = (rawCd && rawCd !== '0' && rawCd !== 'N/A' && rawCd !== 'NO APLICA' && rawCd !== 'CD') ? rawCd : '';
           const cargo = getConsolidatedField(list, ['POSICIONES', 'CARGO', 'R'], false, 'COLABORADOR');
           const placaBase = getConsolidatedField(list, ['PLACA', 'Placa', 'placa', 'BB'], false, '').toUpperCase();
 
@@ -2254,7 +2303,7 @@ document.addEventListener('DOMContentLoaded', () => {
       'CEDULA (SIN PUNTOS)': v.cedula,
       'TIPO DE VEHICULO': v.tipoVehiculo,
       'EMPRESA': v.empresa,
-      'CENTRO DE DISTRIBUCION': v.centroDistribucion || 'CEDI BUCARAMANGA',
+      'Centro de Distribución': resolveCentroDistribucion(v),
       'POSICIONES': v.cargo,
       'FECHA VENCIMIENTO SOAT': v.soatVencimiento,
       'FECHA VENCIMIENTO RTM': v.rtmVencimiento,
